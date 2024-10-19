@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 torch.set_default_device("cuda")
 
-B, T, D, V = 32, 1024, 256, 4096
+B, T, D, V = 32, 1024, 768, 128256
 model = nn.Linear(D, V).to(torch.bfloat16)
 nll = nn.NLLLoss(reduction="sum")
 ce = nn.CrossEntropyLoss()
@@ -175,4 +175,5 @@ concatenated_batch = torch.cat([chosen, rejected], dim=0)
 concatenated_label = torch.cat([chosen_label, rejected_label], dim=0)
 print("f4", f4(model, concatenated_batch, concatenated_label))
 
-print("f5", f5(model, concatenated_batch, concatenated_label))
+compiled = False
+print("f5", f5(model, concatenated_batch, concatenated_label, compiled))
