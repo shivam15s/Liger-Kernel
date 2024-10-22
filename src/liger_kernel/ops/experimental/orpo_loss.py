@@ -1,0 +1,108 @@
+import torch
+import torch.nn.functional as F
+
+
+def odds_ratio_loss(chosen_logps, rejected_logps, beta=1.0):
+    log_odds = (chosen_logps - rejected_logps) - (
+        torch.log1p(-torch.exp(chosen_logps)) - torch.log1p(-torch.exp(rejected_logps))
+    )
+    sig_ratio = F.sigmoid(log_odds)
+    ratio = torch.log(sig_ratio)
+    losses = beta * ratio
+    return losses.sum()
+
+
+class LigerFusedLinearORPOFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, _input, weight, target, bias=None, compiled=True):
+        CHUNK_SIZE = 256
+
+        def _compute_orpo_loss(input_chunk, weight, target, bias=None):
+            len_chosen_chunk = target.shape[0] // 2
+
+            unnorm_logits = input_chunk @ weight.t()  # chunk_size x V
+            if bias is not None:
+                unnorm_logits = unnorm_logits + bias
+            unnorm_logits = unnorm_logits.float()
+            norm_logits = F.log_softmax(unnorm_logits, dim=-1)
+
+            chosen_nll_loss = F.nll_loss(
+                norm_logits[:len_chosen_chunk].view(-1, norm_logits.shape[-1]),
+                target[:len_chosen_chunk].view(-1),
+                reduction="sum"
+            )
+            all_logps = norm_logits.gather(-1, target.unsqueeze(1)).squeeze(1)
+            chosen_logps = all_logps[:len_chosen_chunk]
+            rejected_logps = all_logps[len_chosen_chunk:]
+
+            or_loss = odds_ratio_loss(chosen_logps, rejected_logps)
+            loss = chosen_nll_loss + or_loss
+            return loss
+
+        def compute_orpo_loss(input_chunk, weight, target, bias=None):
+            return _compute_orpo_loss(input_chunk, weight, target, bias)
+
+        grad_weight = torch.zeros_like(weight)
+        grad_chosen_inputs = []
+        grad_rejected_inputs = []
+        grad_bias = torch.zeros_like(bias) if bias is not None else None
+        loss_acc = torch.zeros((), device=_input.device)
+
+        chunks = max(1, _input.shape[0] // (2 * CHUNK_SIZE))
+
+        def accumulate_chunk(input_chunk, target_chunk):
+            if bias is not None:
+                (chunk_grad_input, chunk_grad_weight, chunk_grad_bias), chunk_loss = torch.func.grad_and_value(
+                    compute_orpo_loss, argnums=(0, 1, 3)
+                )(input_chunk, weight, target_chunk, bias)
+                grad_bias.add_(chunk_grad_bias)
+            else:
+                (chunk_grad_input, chunk_grad_weight), chunk_loss = torch.func.grad_and_value(
+                    compute_orpo_loss, argnums=(0, 1)
+                )(input_chunk, weight, target_chunk)
+            grad_weight.add_(chunk_grad_weight)
+            loss_acc.add_(chunk_loss)
+            return chunk_grad_input
+
+        if compiled:
+            accumulate_chunk = torch.compile(accumulate_chunk)
+
+        len_chosen = target.shape[0] // 2
+        _chosen_input_chunks = torch.chunk(_input[:len_chosen], chunks=chunks, dim=0)
+        _chosen_target_chunks = torch.chunk(target[:len_chosen], chunks=chunks, dim=0)
+        _rejected_input_chunks = torch.chunk(_input[len_chosen:], chunks=chunks, dim=0)
+        _rejected_target_chunks = torch.chunk(target[len_chosen:], chunks=chunks, dim=0)
+
+        for (
+            chosen_input_chunk,
+            rejected_input_chunk,
+            chosen_target_chunk,
+            rejected_target_chunk,
+        ) in zip(
+            _chosen_input_chunks,
+            _rejected_input_chunks,
+            _chosen_target_chunks,
+            _rejected_target_chunks,
+        ):
+            input_chunk = torch.cat([chosen_input_chunk, rejected_input_chunk], dim=0)
+            target_chunk = torch.cat([chosen_target_chunk, rejected_target_chunk], dim=0)
+            grad_input = accumulate_chunk(input_chunk, target_chunk)
+            grad_chosen_inputs.append(grad_input[: chosen_target_chunk.shape[0]])
+            grad_rejected_inputs.append(grad_input[chosen_target_chunk.shape[0] :])
+
+        # combine grad_chosen_inputs and grad_rejected_inputs
+        grad_inputs = grad_chosen_inputs + grad_rejected_inputs
+
+        assert len(grad_inputs) == len(_chosen_input_chunks) + len(_rejected_input_chunks)
+
+        ctx.save_for_backward(
+            torch.cat(grad_inputs, dim=0),
+            grad_weight,
+            grad_bias if grad_bias is not None else None,
+        )
+        return loss_acc
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad_input, grad_weight, grad_bias = ctx.saved_tensors
+        return grad_input, grad_weight, None, grad_bias, None
