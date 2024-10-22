@@ -1,5 +1,12 @@
 import torch
+from triton import next_power_of_2
 import torch.nn.functional as F
+from liger_kernel.ops.utils import element_mul_kernel
+
+# The hard limit of TRITON_MAX_TENSOR_NUMEL is 1048576 https://github.com/triton-lang/triton/blob/ba42a5c68fd0505f8c42f4202d53be0f8d9a5fe0/python/triton/language/core.py#L19
+# However, setting limit as 65536 as in LayerNorm tutorial is faster because of less register spilling
+# The optimal maximum block size depends on your hardware, your kernel, and your dtype
+MAX_FUSED_SIZE = 65536 // 2
 
 
 def odds_ratio_loss(chosen_logps, rejected_logps, beta=1.0):
@@ -105,4 +112,46 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         grad_input, grad_weight, grad_bias = ctx.saved_tensors
+        if torch.ne(grad_output, torch.tensor(1.0, device=grad_output.device)):
+            # We use a Triton kernel instead of a PyTorch operation because modifying inputs in-place
+            # for gradient storage and backward multiple times causes anomalies with PyTorch but not with Triton.
+            BT, H = grad_input.shape
+            n_rows = BT
+            BLOCK_SIZE = min(MAX_FUSED_SIZE, next_power_of_2(H))
+
+            element_mul_kernel[(n_rows,)](
+                grad_input,
+                grad_input.stride(-2),
+                grad_output,
+                H,
+                BLOCK_SIZE=BLOCK_SIZE,
+                num_warps=32,
+            )
+
+            # handle grad_weight
+            if grad_weight is not None:
+                V, H = grad_weight.shape
+                n_rows = V
+
+                element_mul_kernel[(n_rows,)](
+                    grad_weight,
+                    grad_weight.stride(-2),
+                    grad_output,
+                    H,
+                    BLOCK_SIZE=BLOCK_SIZE,
+                    num_warps=32,
+                )
+
+            if grad_bias is not None:
+                V = grad_bias.shape[0]
+                n_rows = V
+
+                element_mul_kernel[(n_rows,)](
+                    grad_bias,
+                    grad_bias.stride(-1),
+                    grad_output,
+                    1,
+                    BLOCK_SIZE=BLOCK_SIZE,
+                    num_warps=32,
+                )
         return grad_input, grad_weight, None, grad_bias, None
