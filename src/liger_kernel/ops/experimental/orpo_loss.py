@@ -36,7 +36,7 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
             ignore_index (int): Index to ignore for loss computation.
             compiled (bool): Whether to use compiled mode for chunk accumulation.
         """
-        CHUNK_SIZE = 256
+        CHUNK_SIZE = 4
 
         def _compute_orpo_loss(input_chunk, weight, target, bias=None):
             len_chosen_chunk = target.shape[0] // 2
@@ -171,4 +171,24 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
                     BLOCK_SIZE=BLOCK_SIZE,
                     num_warps=32,
                 )
-        return grad_input, grad_weight, None, grad_bias, None
+        return grad_input, grad_weight, None, grad_bias, None, None
+
+
+if __name__ == "__main__":
+    # Define input tensors
+    B, T, H, V = 32, 1024, 768, 128256
+    scalar = 1.0
+    dtype = torch.bfloat16
+    bias = True
+    device = "cuda"
+
+    _input = torch.randn(B, T, H, device=device, dtype=dtype) * scalar
+    x = _input.detach().clone().requires_grad_(True)
+
+    target = torch.randint(0, V, (B, T,), device=device, dtype=torch.long)
+    weight = torch.randn(V, H, device=device, dtype=dtype)
+    bias = torch.randn(V, device=device, dtype=dtype) if bias else None
+
+    y = LigerFusedLinearORPOFunction.apply(x, weight, target, bias, -100, True)
+    y.backward()
+

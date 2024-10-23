@@ -17,3 +17,6 @@ uv.lock
 
 # Benchmark images
 benchmark/visualizations
+
+# Torch compile debug
+torch_compile_debug/

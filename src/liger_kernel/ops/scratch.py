@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from liger_kernel.ops.experimental.orpo_loss import LigerFusedLinearORPOFunction
 
 torch.set_default_device("cuda")
 
@@ -132,6 +133,12 @@ def chunked_f(m, batch, label, compiled=True):
     return out
 
 
+def liger_chunked_f(m, batch, label, compiled=True):
+    out = LigerFusedLinearORPOFunction.apply(batch, m.weight, label, m.bias, -100, compiled)
+    out.backward()
+    return out
+
+
 def bench(f, name=None, iters=100, warmup=5, display=True, profile=False, profile_mem=False):
     from triton.testing import do_bench
 
@@ -165,3 +172,4 @@ bench(lambda: f(model, concatenated_batch, concatenated_label), name="eager (non
 bench(lambda: chunked_f(model, concatenated_batch, concatenated_label, compiled=False), name="eager (chunked)")
 bench(lambda: opt_f(model, concatenated_batch, concatenated_label), name="compile (non-chunked)")
 bench(lambda: chunked_f(model, concatenated_batch, concatenated_label, compiled=True), name="compile (chunked)")
+bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, compiled=True), name="compile (chunked)")
