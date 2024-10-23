@@ -55,6 +55,10 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
             rejected_logps = all_logps[len_chosen_chunk:].mean(dim=1, keepdim=True)
 
             or_loss = odds_ratio_loss(chosen_logps, rejected_logps)
+
+            chosen_nll_loss = chosen_nll_loss / (target != ignore_index).sum().item()
+            or_loss = or_loss / _input.shape[0]
+
             loss = chosen_nll_loss + or_loss
             return loss
 
@@ -113,15 +117,13 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
         grad_inputs = grad_chosen_inputs + grad_rejected_inputs
 
         assert len(grad_inputs) == len(_chosen_input_chunks) + len(_rejected_input_chunks)
-        n_non_ignore = (target != ignore_index).sum().item()
-        n_non_ignore = 1
 
         ctx.save_for_backward(
-            torch.cat(grad_inputs, dim=0) / n_non_ignore,
-            grad_weight / n_non_ignore,
-            grad_bias / n_non_ignore if grad_bias is not None else None,
+            torch.cat(grad_inputs, dim=0),
+            grad_weight,
+            grad_bias,
         )
-        return loss_acc / n_non_ignore
+        return loss_acc
 
     @staticmethod
     def backward(ctx, grad_output):

@@ -32,8 +32,10 @@ def f(batch, weight, label, bias, ignore_index=-100):
 
     or_loss = odds_ratio_loss(chosen_logps, rejected_logps)
 
+    chosen_nll_loss /= (label != ignore_index).sum().item()
+    or_loss /= batch.shape[0]
+
     loss = chosen_nll_loss + or_loss
-    # loss /= (label[:len_chosen] != ignore_index).sum().item()
     return loss
 
 
