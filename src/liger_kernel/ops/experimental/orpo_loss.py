@@ -11,6 +11,7 @@ MAX_FUSED_SIZE = 65536 // 2
 
 def odds_ratio_loss(chosen_logps, rejected_logps, beta=1.0):
     """
+    Compute odds-ratio loss.
     Args:
         chosen_logps (torch.Tensor): Avg log probabilities of chosen tokens. Shape: (batch_size,).
         rejected_logps (torch.Tensor): Avg log probabilities of rejected tokens. Shape: (batch_size,).
@@ -19,19 +20,21 @@ def odds_ratio_loss(chosen_logps, rejected_logps, beta=1.0):
     log_odds = (chosen_logps - rejected_logps) - (
         torch.log1p(-torch.exp(chosen_logps)) - torch.log1p(-torch.exp(rejected_logps))
     )
-    sig_ratio = F.sigmoid(log_odds)
-    ratio = torch.log(sig_ratio)
-    losses = beta * ratio
-    return losses.sum()
+    ratio = torch.log(F.sigmoid(log_odds))
+    return beta * ratio.sum()
 
 
 class LigerFusedLinearORPOFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, _input, weight, target, bias=None, ignore_index=-100, compiled=True):
         """
+        Fused linear forward function with ORPO (Odds-Ratio Preference Optimization).
         Args:
             _input (torch.Tensor): Input tensor. Shape: (batch_size, seq_len, hidden_size).
             weight (torch.Tensor): Weight tensor. Shape: (vocab_size, hidden_size).
+            bias (torch.Tensor, optional): Bias tensor. Shape: (hidden_size,).
+            ignore_index (int): Index to ignore for loss computation.
+            compiled (bool): Whether to use compiled mode for chunk accumulation.
         """
         CHUNK_SIZE = 256
 
@@ -115,8 +118,6 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
 
         # combine grad_chosen_inputs and grad_rejected_inputs
         grad_inputs = grad_chosen_inputs + grad_rejected_inputs
-
-        assert len(grad_inputs) == len(_chosen_input_chunks) + len(_rejected_input_chunks)
 
         ctx.save_for_backward(
             torch.cat(grad_inputs, dim=0),
