@@ -99,7 +99,7 @@ class ChunkedORPO(torch.autograd.Function):
         return grad_input, grad_weight, None, grad_bias, None
 
 
-B, T, D, V = 32, 1024, 768, 128256
+B, T, D, V = 16, 1024, 768, 128256
 model = nn.Linear(D, V).to(torch.bfloat16)
 nll = nn.NLLLoss(reduction="sum")
 ce = nn.CrossEntropyLoss()
