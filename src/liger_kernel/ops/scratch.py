@@ -172,4 +172,4 @@ bench(lambda: f(model, concatenated_batch, concatenated_label), name="eager (non
 bench(lambda: chunked_f(model, concatenated_batch, concatenated_label, compiled=False), name="eager (chunked)")
 bench(lambda: opt_f(model, concatenated_batch, concatenated_label), name="compile (non-chunked)")
 bench(lambda: chunked_f(model, concatenated_batch, concatenated_label, compiled=True), name="compile (chunked)")
-bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, compiled=True), name="compile (chunked)")
+bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, compiled=True), name="compile (chunked modified)")

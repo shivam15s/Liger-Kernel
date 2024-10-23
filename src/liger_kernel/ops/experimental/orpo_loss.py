@@ -36,10 +36,10 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
             ignore_index (int): Index to ignore for loss computation.
             compiled (bool): Whether to use compiled mode for chunk accumulation.
         """
-        CHUNK_SIZE = 4
+        CHUNK_SIZE = 1
 
-        def _compute_orpo_loss(input_chunk, weight, target, bias=None):
-            len_chosen_chunk = target.shape[0] // 2
+        def _compute_orpo_loss(input_chunk, weight, target_chunk, bias=None):
+            len_chosen_chunk = target_chunk.shape[0] // 2
 
             unnorm_logits = input_chunk @ weight.t()  # chunk_size x V
             if bias is not None:
@@ -49,24 +49,24 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
 
             chosen_nll_loss = F.nll_loss(
                 norm_logits[:len_chosen_chunk].view(-1, norm_logits.shape[-1]),
-                target[:len_chosen_chunk].view(-1),
+                target_chunk[:len_chosen_chunk].view(-1),
                 reduction="sum",
                 ignore_index=ignore_index
             )
-            all_logps = norm_logits.gather(-1, target.unsqueeze(2)).squeeze(2)
-            chosen_logps = all_logps[:len_chosen_chunk].mean(dim=1, keepdim=True)
-            rejected_logps = all_logps[len_chosen_chunk:].mean(dim=1, keepdim=True)
+            all_logps = norm_logits.gather(-1, target_chunk.unsqueeze(2)).squeeze(2)
+            chosen_logps = all_logps[:len_chosen_chunk].mean(dim=1)
+            rejected_logps = all_logps[len_chosen_chunk:].mean(dim=1)
 
             or_loss = odds_ratio_loss(chosen_logps, rejected_logps)
 
-            chosen_nll_loss = chosen_nll_loss / (target != ignore_index).sum().item()
+            chosen_nll_loss = chosen_nll_loss / (target[:target.shape[0]//2] != ignore_index).sum().item()
             or_loss = or_loss / _input.shape[0]
 
             loss = chosen_nll_loss + or_loss
             return loss
 
-        def compute_orpo_loss(input_chunk, weight, target, bias=None):
-            return _compute_orpo_loss(input_chunk, weight, target, bias)
+        def compute_orpo_loss(input_chunk, weight, target_chunk, bias=None):
+            return _compute_orpo_loss(input_chunk, weight, target_chunk, bias)
 
         grad_weight = torch.zeros_like(weight)
         grad_chosen_inputs = []
@@ -112,6 +112,8 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
         ):
             input_chunk = torch.cat([chosen_input_chunk, rejected_input_chunk], dim=0)
             target_chunk = torch.cat([chosen_target_chunk, rejected_target_chunk], dim=0)
+            # from liger_kernel.ops.experimental.orpo_loss_accumulate import call as accumulate_chunk_compiled
+            # grad_input = accumulate_chunk_compiled([bias, input_chunk, weight, target_chunk, grad_bias, grad_weight, loss_acc])[0]
             grad_input = accumulate_chunk(input_chunk, target_chunk)
             grad_chosen_inputs.append(grad_input[: chosen_target_chunk.shape[0]])
             grad_rejected_inputs.append(grad_input[chosen_target_chunk.shape[0] :])
@@ -191,4 +193,3 @@ if __name__ == "__main__":
 
     y = LigerFusedLinearORPOFunction.apply(x, weight, target, bias, -100, True)
     y.backward()
-

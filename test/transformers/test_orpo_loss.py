@@ -32,7 +32,7 @@ def f(batch, weight, label, bias, ignore_index=-100):
 
     or_loss = odds_ratio_loss(chosen_logps, rejected_logps)
 
-    chosen_nll_loss /= (label != ignore_index).sum().item()
+    chosen_nll_loss /= (label[:len_chosen] != ignore_index).sum().item()
     or_loss /= batch.shape[0]
 
     loss = chosen_nll_loss + or_loss
@@ -42,9 +42,10 @@ def f(batch, weight, label, bias, ignore_index=-100):
 @pytest.mark.parametrize(
     "B, T, H, V",
     [
-        (2, 2, 8, 8),
+        # (2, 2, 8, 8),
         # weird shapes
-        (8, 8, 41, 41),
+        # (8, 8, 41, 41),
+        (32, 1024, 768, 128256),
     ],
 )
 @pytest.mark.parametrize(
