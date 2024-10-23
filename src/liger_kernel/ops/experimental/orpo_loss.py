@@ -112,7 +112,7 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
         ):
             input_chunk = torch.cat([chosen_input_chunk, rejected_input_chunk], dim=0)
             target_chunk = torch.cat([chosen_target_chunk, rejected_target_chunk], dim=0)
-            from liger_kernel.ops.experimental.orpo_loss_accumulate import call as accumulate_chunk_compiled
+            from liger_kernel.ops.experimental.orpo_loss_accumulate_modified import call as accumulate_chunk_compiled
             grad_input = accumulate_chunk_compiled([bias, input_chunk, weight, target_chunk, target, grad_bias, grad_weight, loss_acc])[0]
             # grad_input = accumulate_chunk(input_chunk, target_chunk)
             grad_chosen_inputs.append(grad_input[: chosen_target_chunk.shape[0]])
