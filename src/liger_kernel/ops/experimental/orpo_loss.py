@@ -10,6 +10,12 @@ MAX_FUSED_SIZE = 65536 // 2
 
 
 def odds_ratio_loss(chosen_logps, rejected_logps, beta=1.0):
+    """
+    Args:
+        chosen_logps (torch.Tensor): Avg log probabilities of chosen tokens. Shape: (batch_size,).
+        rejected_logps (torch.Tensor): Avg log probabilities of rejected tokens. Shape: (batch_size,).
+        beta (float): Weight for the odds ratio loss.
+    """
     log_odds = (chosen_logps - rejected_logps) - (
         torch.log1p(-torch.exp(chosen_logps)) - torch.log1p(-torch.exp(rejected_logps))
     )
@@ -21,7 +27,12 @@ def odds_ratio_loss(chosen_logps, rejected_logps, beta=1.0):
 
 class LigerFusedLinearORPOFunction(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, _input, weight, target, bias=None, compiled=True):
+    def forward(ctx, _input, weight, target, bias=None, ignore_index=-100, compiled=True):
+        """
+        Args:
+            _input (torch.Tensor): Input tensor. Shape: (batch_size, seq_len, hidden_size).
+            weight (torch.Tensor): Weight tensor. Shape: (vocab_size, hidden_size).
+        """
         CHUNK_SIZE = 256
 
         def _compute_orpo_loss(input_chunk, weight, target, bias=None):
@@ -36,11 +47,12 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
             chosen_nll_loss = F.nll_loss(
                 norm_logits[:len_chosen_chunk].view(-1, norm_logits.shape[-1]),
                 target[:len_chosen_chunk].view(-1),
-                reduction="sum"
+                reduction="sum",
+                ignore_index=ignore_index
             )
-            all_logps = norm_logits.gather(-1, target.unsqueeze(1)).squeeze(1)
-            chosen_logps = all_logps[:len_chosen_chunk]
-            rejected_logps = all_logps[len_chosen_chunk:]
+            all_logps = norm_logits.gather(-1, target.unsqueeze(2)).squeeze(2)
+            chosen_logps = all_logps[:len_chosen_chunk].mean(dim=1, keepdim=True)
+            rejected_logps = all_logps[len_chosen_chunk:].mean(dim=1, keepdim=True)
 
             or_loss = odds_ratio_loss(chosen_logps, rejected_logps)
             loss = chosen_nll_loss + or_loss
@@ -101,13 +113,15 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
         grad_inputs = grad_chosen_inputs + grad_rejected_inputs
 
         assert len(grad_inputs) == len(_chosen_input_chunks) + len(_rejected_input_chunks)
+        n_non_ignore = (target != ignore_index).sum().item()
+        n_non_ignore = 1
 
         ctx.save_for_backward(
-            torch.cat(grad_inputs, dim=0),
-            grad_weight,
-            grad_bias if grad_bias is not None else None,
+            torch.cat(grad_inputs, dim=0) / n_non_ignore,
+            grad_weight / n_non_ignore,
+            grad_bias / n_non_ignore if grad_bias is not None else None,
         )
-        return loss_acc
+        return loss_acc / n_non_ignore
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -115,7 +129,7 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
         if torch.ne(grad_output, torch.tensor(1.0, device=grad_output.device)):
             # We use a Triton kernel instead of a PyTorch operation because modifying inputs in-place
             # for gradient storage and backward multiple times causes anomalies with PyTorch but not with Triton.
-            BT, H = grad_input.shape
+            BT, H = grad_input.view(-1, grad_input.shape[-1]).shape
             n_rows = BT
             BLOCK_SIZE = min(MAX_FUSED_SIZE, next_power_of_2(H))
 

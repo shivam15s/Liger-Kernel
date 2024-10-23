@@ -12,7 +12,7 @@ from liger_kernel.ops.experimental.orpo_loss import (
 set_seed()
 
 
-def f(batch, weight, label, bias):
+def f(batch, weight, label, bias, ignore_index=-100):
     len_chosen = batch.shape[0] // 2
     unnorm_logits = batch @ weight.t()  # chunk_size x V
     if bias is not None:
@@ -22,16 +22,18 @@ def f(batch, weight, label, bias):
     chosen_nll_loss = F.nll_loss(
         concatenated_logits[:len_chosen].view(-1, concatenated_logits.shape[-1]),
         label[:len_chosen].view(-1),
-        reduction="sum"
+        reduction="sum",
+        ignore_index=ignore_index
     )
 
-    all_logps = concatenated_logits.gather(-1, label.unsqueeze(1)).squeeze(1)
-    chosen_logps = all_logps[:len_chosen]
-    rejected_logps = all_logps[len_chosen:]
+    all_logps = concatenated_logits.gather(-1, label.unsqueeze(2)).squeeze(2)
+    chosen_logps = all_logps[:len_chosen].mean(dim=1)
+    rejected_logps = all_logps[len_chosen:].mean(dim=1)
 
     or_loss = odds_ratio_loss(chosen_logps, rejected_logps)
 
     loss = chosen_nll_loss + or_loss
+    # loss /= (label[:len_chosen] != ignore_index).sum().item()
     return loss
 
 
@@ -40,7 +42,7 @@ def f(batch, weight, label, bias):
     [
         (2, 2, 8, 8),
         # weird shapes
-        (9, 8, 41, 41),
+        (8, 8, 41, 41),
     ],
 )
 @pytest.mark.parametrize(
@@ -54,11 +56,11 @@ def f(batch, weight, label, bias):
 def test_correctness_functional(B, T, H, V, scalar, dtype, bias, atol, rtol):
     device = "cuda"
 
-    _input = torch.randn(B * T, H, device=device, dtype=dtype) * scalar
+    _input = torch.randn(B, T, H, device=device, dtype=dtype) * scalar
     x1 = _input.detach().clone().requires_grad_(True)
     x2 = _input.detach().clone().requires_grad_(True)
 
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
+    target = torch.randint(0, V, (B, T,), device=device, dtype=torch.long)
 
     weight = torch.randn(V, H, device=device, dtype=dtype)
     bias = torch.randn(V, device=device, dtype=dtype) if bias else None
