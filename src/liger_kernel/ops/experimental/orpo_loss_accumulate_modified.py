@@ -57,8 +57,12 @@ def triton_(in_ptr0, in_ptr1, in_ptr2, out_ptr0, out_ptr1, out_ptr2, xnumel, rnu
     xindex = xoffset + tl.arange(0, XBLOCK)[:, None]
     xmask = xindex < xnumel
     rbase = tl.arange(0, RBLOCK)[None, :]
+
+    # Pre-allocate intermediate values
     x0 = xindex
     _tmp5 = tl.full([XBLOCK, RBLOCK], float("-inf"), tl.float32)
+    _tmp14 = tl.full([XBLOCK, RBLOCK], 0, tl.float32)
+
     for roffset in range(0, rnumel, RBLOCK):
         rindex = roffset + rbase
         rmask = rindex < rnumel
@@ -68,24 +72,29 @@ def triton_(in_ptr0, in_ptr1, in_ptr2, out_ptr0, out_ptr1, out_ptr2, xnumel, rnu
         tmp2 = tmp0 + tmp1
         tmp3 = tmp2.to(tl.float32)
         tmp4 = tl.broadcast_to(tmp3, [XBLOCK, RBLOCK])
-        tmp6 = triton_helpers.maximum(_tmp5, tmp4)
+        tmp6 = triton_helpers.maximum(_tmp5, tmp4) # new max
+        tmp7 = _tmp5 - tmp6
+        tmp8 = tl_math.exp(tmp7)
+        tmp9 = tl.broadcast_to(tmp8, [XBLOCK, RBLOCK])
+        tmp10 = _tmp14 * tmp9
+        _tmp14 = tl.where(rmask, tmp10, _tmp14)
         _tmp5 = tl.where(rmask, tmp6, _tmp5)
-    tmp5 = triton_helpers.max2(_tmp5, 1)[:, None]
-    tl.store(out_ptr0 + (x0), tmp5, None)
-    _tmp14 = tl.full([XBLOCK, RBLOCK], 0, tl.float32)
-    for roffset in range(0, rnumel, RBLOCK):
-        rindex = roffset + rbase
-        rmask = rindex < rnumel
-        r1 = rindex
-        tmp7 = tl.load(in_ptr0 + (r1 + (128256*x0)), rmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
-        tmp8 = tl.load(in_ptr1 + (r1), rmask, eviction_policy='evict_last', other=0.0).to(tl.float32)
-        tmp9 = tmp7 + tmp8
-        tmp10 = tmp9.to(tl.float32)
-        tmp11 = tmp10 - tmp5
+
+        tmp11 = tmp4 - _tmp5
         tmp12 = tl_math.exp(tmp11)
         tmp13 = tl.broadcast_to(tmp12, [XBLOCK, RBLOCK])
         tmp15 = _tmp14 + tmp13
         _tmp14 = tl.where(rmask, tmp15, _tmp14)
+
+    tmp5 = triton_helpers.max2(_tmp5, 1)[:, None]
+    tl.store(out_ptr0 + (x0), tmp5, None)
+
+    # Need final normalization using actual max
+    _tmp6 = tl.broadcast_to(tmp5, [XBLOCK, RBLOCK])
+    _tmp7 = _tmp5 - _tmp6
+    _tmp8 = tl_math.exp(_tmp7)
+    _tmp14 = _tmp14 * _tmp8
+
     tmp14 = tl.sum(_tmp14, 1)[:, None]
     tl.store(out_ptr1 + (x0), tmp14, None)
     tmp16 = tl.load(in_ptr2 + (x0), None, eviction_policy='evict_last')

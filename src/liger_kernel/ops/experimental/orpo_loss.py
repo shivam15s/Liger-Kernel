@@ -26,7 +26,7 @@ def odds_ratio_loss(chosen_logps, rejected_logps, beta=1.0):
 
 class LigerFusedLinearORPOFunction(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, _input, weight, target, bias=None, ignore_index=-100, compiled=True):
+    def forward(ctx, _input, weight, target, bias=None, ignore_index=-100, compiled=True, pre_compiled=None):
         """
         Fused linear forward function with ORPO (Odds-Ratio Preference Optimization).
         Args:
@@ -90,8 +90,6 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
             loss_acc.add_(chunk_loss)
             return chunk_grad_input
 
-        if compiled:
-            accumulate_chunk = torch.compile(accumulate_chunk)
 
         len_chosen = target.shape[0] // 2
         _chosen_input_chunks = torch.chunk(_input[:len_chosen], chunks=chunks, dim=0)
@@ -112,9 +110,19 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
         ):
             input_chunk = torch.cat([chosen_input_chunk, rejected_input_chunk], dim=0)
             target_chunk = torch.cat([chosen_target_chunk, rejected_target_chunk], dim=0)
-            from liger_kernel.ops.experimental.orpo_loss_accumulate_modified import call as accumulate_chunk_compiled
-            grad_input = accumulate_chunk_compiled([bias, input_chunk, weight, target_chunk, target, grad_bias, grad_weight, loss_acc])[0]
-            # grad_input = accumulate_chunk(input_chunk, target_chunk)
+
+            if pre_compiled:
+                if pre_compiled == "original":
+                    from liger_kernel.ops.experimental.orpo_loss_accumulate_original import call as accumulate_chunk_compiled
+                elif pre_compiled == "modified":
+                    from liger_kernel.ops.experimental.orpo_loss_accumulate_modified import call as accumulate_chunk_compiled
+
+                grad_input = accumulate_chunk_compiled([bias, input_chunk, weight, target_chunk, target, grad_bias, grad_weight, loss_acc])[0]
+            else:
+                if compiled:
+                    accumulate_chunk = torch.compile(accumulate_chunk)
+                grad_input = accumulate_chunk(input_chunk, target_chunk)
+
             grad_chosen_inputs.append(grad_input[: chosen_target_chunk.shape[0]])
             grad_rejected_inputs.append(grad_input[chosen_target_chunk.shape[0] :])
 
@@ -173,7 +181,7 @@ class LigerFusedLinearORPOFunction(torch.autograd.Function):
                     BLOCK_SIZE=BLOCK_SIZE,
                     num_warps=32,
                 )
-        return grad_input, grad_weight, None, grad_bias, None, None
+        return grad_input, grad_weight, None, grad_bias, None, None, None
 
 
 if __name__ == "__main__":
