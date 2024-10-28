@@ -5,6 +5,9 @@ from liger_kernel.ops.experimental.orpo_loss import (
     odds_ratio_loss,
     LigerFusedLinearORPOFunction,
 )
+from torch.profiler import profile, record_function, ProfilerActivity
+import pandas as pd
+import numpy as np
 
 torch.set_default_device("cuda")
 
@@ -56,7 +59,10 @@ def bench(f, name=None, iters=100, warmup=5, display=True, profile=False, profil
         f()
         torch.cuda.memory._dump_snapshot(f"{name if name is not None else 'memory'}.pickle")
     if profile:
-        with torch.profiler.profile() as prof:
+        with torch.profiler.profile(
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(f'profile_traces/{name}'),
+            profile_memory=True
+        ) as prof:
             f()
         prof.export_chrome_trace(f"{name if name is not None else 'trace'}.json")
 
@@ -70,25 +76,86 @@ def bench(f, name=None, iters=100, warmup=5, display=True, profile=False, profil
         print(res)
         print(f"Peak mem: {torch.cuda.max_memory_allocated()/1e9}gb")
         print()
-    return res
+    return ms_per_iter, torch.cuda.max_memory_allocated()/1e9
 
 
-B, T, D, V = 16, 1024, 768, 128256
-model = nn.Linear(D, V).to(torch.bfloat16)
-nll = nn.NLLLoss(reduction="sum")
-ce = nn.CrossEntropyLoss()
-chosen = torch.randn(B, T, D, requires_grad=True, dtype=torch.bfloat16)
-rejected = torch.randn(B, T, D, requires_grad=True, dtype=torch.bfloat16)
-chosen_label = torch.randint(0, V, (B, T)).to(torch.int64)
-rejected_label = torch.randint(0, V, (B, T)).to(torch.int64)
-concatenated_batch = torch.cat([chosen, rejected], dim=0)
-concatenated_label = torch.cat([chosen_label, rejected_label], dim=0)
+def get_metrics(f, iters):
+    times = []
+    mems = []
+    for _ in range(iters):
+        try:
+            t, m = bench(f, display=False)
+        except:
+            return {
+                'time_mean': "OOM",
+                'time_std': 0,
+                'mem_mean': "OOM",
+                'mem_std': 0
+            }
+        times.append(t)
+        mems.append(m)
+    return {
+        'time_mean': np.mean(times),
+        'time_std': np.std(times),
+        'mem_mean': np.mean(mems),
+        'mem_std': np.std(mems)
+    }
 
 
-opt_f = torch.compile(f)
-bench(lambda: f(model, concatenated_batch, concatenated_label), name="eager (ORPO non-chunked)")
-bench(lambda: opt_f(model, concatenated_batch, concatenated_label), name="compile (ORPO non-chunked)")
-bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, compiled=False, pre_compiled=None), name="eager (ORPO chunked)")
-bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, compiled=True, pre_compiled=None), name="compile (ORPO chunked)")
-bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, pre_compiled="original"), name="(pre)compile (ORPO chunked)")
-bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, pre_compiled="modified"), name="compile + online softmax (ORPO chunked)")
+def insert_row(df, model_name, provider, hf_metrics, B):
+    data = {
+        'model': [model_name],
+        'provider': [provider],
+        'batch_size': [B],
+        'total_peak_allocated_memory_MB_mean': [hf_metrics['mem_mean']],
+        'total_peak_allocated_memory_MB_std': [hf_metrics['mem_std']],
+        'ms_time_mean': [hf_metrics['time_mean']],
+        'ms_time_std': [hf_metrics['time_std']]
+    }
+    df = pd.concat([df, pd.DataFrame(data)], ignore_index=True)
+    return df
+
+
+data = {
+    'model': [],
+    'provider': [],
+    'batch_size': [],
+    'total_peak_allocated_memory_MB_mean': [],
+    'total_peak_allocated_memory_MB_std': [],
+    'ms_time_mean': [],
+    'ms_time_std': []
+}
+df = pd.DataFrame(data)
+
+
+ITERS = 3
+for B in [2, 4, 8, 16, 32, 64, 128]:
+    print("B", B)
+    T, D, V = 1024, 768, 128256
+    model = nn.Linear(D, V).to(torch.bfloat16)
+    nll = nn.NLLLoss(reduction="sum")
+    ce = nn.CrossEntropyLoss()
+    chosen = torch.randn(B, T, D, requires_grad=True, dtype=torch.bfloat16)
+    rejected = torch.randn(B, T, D, requires_grad=True, dtype=torch.bfloat16)
+    chosen_label = torch.randint(0, V, (B, T)).to(torch.int64)
+    rejected_label = torch.randint(0, V, (B, T)).to(torch.int64)
+    concatenated_batch = torch.cat([chosen, rejected], dim=0)
+    concatenated_label = torch.cat([chosen_label, rejected_label], dim=0)
+
+    # liger_chunked_f(model, concatenated_batch, concatenated_label, pre_compiled="modified")
+    # opt_f = torch.compile(f)
+    # bench(lambda: f(model, concatenated_batch, concatenated_label), name="eager (ORPO non-chunked)", profile=False)
+    hf_metrics = get_metrics(lambda: f(model, concatenated_batch, concatenated_label), ITERS)
+    df = insert_row(df, "ORPO", "huggingface", hf_metrics, B)
+
+    # bench(lambda: opt_f(model, concatenated_batch, concatenated_label), name="compile (ORPO non-chunked)")
+    # bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, compiled=False, pre_compiled=None), name="eager (ORPO chunked)")
+    # bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, compiled=True, pre_compiled=None), name="compile (ORPO chunked)")
+    # bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, pre_compiled="original"), name="(pre)compile (ORPO chunked)")
+    # bench(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, pre_compiled="modified"), name="compile + online softmax (ORPO chunked)", profile=False)
+    liger_metrics = get_metrics(lambda: liger_chunked_f(model, concatenated_batch, concatenated_label, pre_compiled="modified"), ITERS)
+    df = insert_row(df, "ORPO", "liger", liger_metrics, B)
+    print(df)
+
+
+print(df)

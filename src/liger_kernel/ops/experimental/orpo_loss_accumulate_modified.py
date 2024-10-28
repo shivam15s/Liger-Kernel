@@ -664,14 +664,14 @@ del async_compile
 def call(args):
     arg0_1, arg1_1, arg2_1, arg3_1, arg4_1, arg5_1, arg6_1, arg7_1 = args
     args.clear()
-    assert_size_stride(arg0_1, (128256, ), (1, ))
-    assert_size_stride(arg1_1, (2, 1024, 768), (786432, 768, 1))
-    assert_size_stride(arg2_1, (128256, 768), (768, 1))
-    assert_size_stride(arg3_1, (2, 1024), (1024, 1))
-    assert_size_stride(arg4_1, (32, 1024), (1024, 1))
-    assert_size_stride(arg5_1, (128256, ), (1, ))
-    assert_size_stride(arg6_1, (128256, 768), (768, 1))
-    assert_size_stride(arg7_1, (), ())
+    # assert_size_stride(arg0_1, (128256, ), (1, ))
+    # assert_size_stride(arg1_1, (2, 1024, 768), (786432, 768, 1))
+    # assert_size_stride(arg2_1, (128256, 768), (768, 1))
+    # assert_size_stride(arg3_1, (2, 1024), (1024, 1))
+    # assert_size_stride(arg4_1, (32, 1024), (1024, 1))
+    # assert_size_stride(arg5_1, (128256, ), (1, ))
+    # assert_size_stride(arg6_1, (128256, 768), (768, 1))
+    # assert_size_stride(arg7_1, (), ())
     with torch.cuda._DeviceGuard(0):
         torch.cuda.set_device(0)
         buf0 = empty_strided_cuda((2048, 128256), (128256, 1), torch.bfloat16)

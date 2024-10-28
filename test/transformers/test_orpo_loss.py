@@ -70,7 +70,7 @@ def test_correctness_functional(B, T, H, V, scalar, dtype, bias, atol, rtol):
     bias = torch.randn(V, device=device, dtype=dtype) if bias else None
 
     y1 = f(x1, weight, target, bias)
-    y2 = LigerFusedLinearORPOFunction.apply(x2, weight, target, bias)
+    y2 = LigerFusedLinearORPOFunction.apply(x2, weight, target, bias, -100, True, "modified")
 
     assert torch.allclose(y1, y2, atol=atol, rtol=rtol)
 
