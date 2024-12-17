@@ -95,7 +95,6 @@ def _test_correctness_once(target_ce, B, T, V, reduction, scalar, dtype, atol, r
 def _test_correctness_with_ignore_index_once(
     target_ce, B, T, V, ignore_index, reduction, scalar, dtype, atol, rtol
 ):
-
     torch_ce = CrossEntropyLoss(ignore_index=ignore_index, reduction=reduction)
 
     _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
@@ -126,7 +125,6 @@ def _test_correctness_with_ignore_index_once(
 def _test_correctness_with_label_smoothing_once(
     target_ce, B, T, V, label_smoothing, scalar, dtype, atol, rtol
 ):
-
     torch_ce = CrossEntropyLoss(label_smoothing=label_smoothing)
 
     _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
@@ -148,7 +146,6 @@ def _test_correctness_with_label_smoothing_once(
 def _test_correctness_with_label_smoothing_with_ignore_index_once(
     target_ce, B, T, V, ignore_index, label_smoothing, scalar, dtype, atol, rtol
 ):
-
     torch_ce = CrossEntropyLoss(
         ignore_index=ignore_index, label_smoothing=label_smoothing
     )
@@ -181,7 +178,6 @@ def _test_correctness_with_label_smoothing_with_ignore_index_once(
 def _test_correctness_with_softcap_once(
     target_ce, B, T, V, softcap, reduction, scalar, dtype, atol, rtol
 ):
-
     torch_ce = CrossEntropyLoss(reduction=reduction)
 
     _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
@@ -309,7 +305,6 @@ def _test_correctness_with_z_loss_with_other_params_once(
 def _test_correctness_not_last_layer_once(
     target_ce, B, T, V, reduction, scalar, dtype, atol, rtol
 ):
-
     torch_ce = CrossEntropyLoss(reduction=reduction)
 
     _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
@@ -339,7 +334,6 @@ def _test_correctness_functional(
     atol,
     rtol,
 ):
-
     _input = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
 
     x1 = _input.clone().requires_grad_(True)

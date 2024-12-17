@@ -54,8 +54,9 @@ def bench_speed_rope(input: SingleBenchmarkRunInput) -> SingleBenchmarkRunOutput
         requires_grad=True,
         dtype=dtype,
     ).transpose(1, 2)
-    dq, dk = torch.randn_like(q, device=device, dtype=dtype), torch.randn_like(
-        k, device=device
+    dq, dk = (
+        torch.randn_like(q, device=device, dtype=dtype),
+        torch.randn_like(k, device=device),
     )
     pos_ids = torch.arange(seq_len, device=device, dtype=torch.long).unsqueeze(0)
     cos, sin = rotary_emb(k, pos_ids)
@@ -138,8 +139,9 @@ def bench_memory_rope(input: SingleBenchmarkRunInput) -> SingleBenchmarkRunOutpu
         requires_grad=True,
         dtype=dtype,
     ).transpose(1, 2)
-    dq, dk = torch.randn_like(q, device=device, dtype=dtype), torch.randn_like(
-        k, device=device
+    dq, dk = (
+        torch.randn_like(q, device=device, dtype=dtype),
+        torch.randn_like(k, device=device),
     )
     pos_ids = torch.arange(seq_len, device=device, dtype=torch.long).unsqueeze(0)
     cos, sin = rotary_emb(k, pos_ids)

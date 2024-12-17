@@ -343,7 +343,6 @@ def revert_liger_kernel_to_phi3(model_config: MiniModelConfig):
 
 
 class HFAlignmentLoss:
-
     def __init__(
         self,
         alpha: float = 1.0,

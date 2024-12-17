@@ -56,8 +56,9 @@ def bench_speed_qwen2vl_mrope(
         requires_grad=True,
         dtype=dtype,
     ).transpose(1, 2)
-    dq, dk = torch.randn_like(q, device=device, dtype=dtype), torch.randn_like(
-        k, device=device
+    dq, dk = (
+        torch.randn_like(q, device=device, dtype=dtype),
+        torch.randn_like(k, device=device),
     )
     pos_ids = torch.arange(seq_len * 3, device=device, dtype=torch.long).view(3, 1, -1)
     cos, sin = rotary_emb(k, pos_ids)
@@ -149,8 +150,9 @@ def bench_memory_qwen2vl_mrope(
         requires_grad=True,
         dtype=dtype,
     ).transpose(1, 2)
-    dq, dk = torch.randn_like(q, device=device, dtype=dtype), torch.randn_like(
-        k, device=device
+    dq, dk = (
+        torch.randn_like(q, device=device, dtype=dtype),
+        torch.randn_like(k, device=device),
     )
     pos_ids = torch.arange(seq_len * 3, device=device, dtype=torch.long).view(3, 1, -1)
     cos, sin = rotary_emb(k, pos_ids)

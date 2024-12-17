@@ -6,7 +6,6 @@ from torch.nn import functional as F
 
 
 class LigerFusedLinearPreferenceBase(torch.autograd.Function):
-
     @abstractmethod
     def preference_loss_fn(*args, **kwargs):
         """
@@ -118,28 +117,34 @@ class LigerFusedLinearPreferenceBase(torch.autograd.Function):
 
         def accumulate_chunk(input_chunk, target_chunk, ref_input_chunk=None):
             if bias is not None:
-                (chunk_grad_input, chunk_grad_weight, chunk_grad_bias), (
-                    chunk_loss,
+                (
+                    (chunk_grad_input, chunk_grad_weight, chunk_grad_bias),
                     (
-                        chunk_chosen_logps,
-                        chunk_rejected_logps,
-                        chunk_chosen_logits_mean,
-                        chunk_rejected_logits_mean,
-                        chunk_nll_loss,
-                        *aux_outputs,
+                        chunk_loss,
+                        (
+                            chunk_chosen_logps,
+                            chunk_rejected_logps,
+                            chunk_chosen_logits_mean,
+                            chunk_rejected_logits_mean,
+                            chunk_nll_loss,
+                            *aux_outputs,
+                        ),
                     ),
                 ) = fused_fwd_bwd(input_chunk, target_chunk, ref_input_chunk)
                 grad_bias.add_(chunk_grad_bias)  # accumulate bias gradient
             else:
-                (chunk_grad_input, chunk_grad_weight), (
-                    chunk_loss,
+                (
+                    (chunk_grad_input, chunk_grad_weight),
                     (
-                        chunk_chosen_logps,
-                        chunk_rejected_logps,
-                        chunk_chosen_logits_mean,
-                        chunk_rejected_logits_mean,
-                        chunk_nll_loss,
-                        *aux_outputs,
+                        chunk_loss,
+                        (
+                            chunk_chosen_logps,
+                            chunk_rejected_logps,
+                            chunk_chosen_logits_mean,
+                            chunk_rejected_logits_mean,
+                            chunk_nll_loss,
+                            *aux_outputs,
+                        ),
                     ),
                 ) = fused_fwd_bwd(input_chunk, target_chunk, ref_input_chunk)
 

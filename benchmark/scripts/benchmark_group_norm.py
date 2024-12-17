@@ -139,12 +139,12 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full", "backward"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
     run_benchmarks(
         bench_test_fn=bench_memory_group_norm,
         kernel_operation_modes=["full", "forward", "backward"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

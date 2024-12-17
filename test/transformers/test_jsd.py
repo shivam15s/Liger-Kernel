@@ -39,8 +39,9 @@ class JSD(torch.nn.Module):
             loss = self.kl(log_p, log_q).sum(dim=-1)
         else:
             log_p, log_q = log_p.to(torch.float), log_q.to(torch.float)
-            log_p, log_q = log_p.view(-1, log_p.size(-1)), log_q.view(
-                -1, log_q.size(-1)
+            log_p, log_q = (
+                log_p.view(-1, log_p.size(-1)),
+                log_q.view(-1, log_q.size(-1)),
             )
             m = torch.lerp(torch.exp(log_q), torch.exp(log_p), self.beta)
             loss = self.beta * self.kl(torch.log(m), log_p).sum(dim=-1) + (

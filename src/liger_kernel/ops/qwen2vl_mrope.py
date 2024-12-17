@@ -124,7 +124,6 @@ def _triton_qwen2vl_mrope(
 
 
 def qwen2vl_mrope_forward(q, k, cos, sin, mrope_section):
-
     # transpose it back to the physical shape because Triton looks at the physical storage
     # note: q and k are incontiguous before the transformation and will become contiguous after transpose
     q = q.transpose(1, 2)
