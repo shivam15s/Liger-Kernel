@@ -1,7 +1,3 @@
-from test.chunked_loss.test_cpo_loss import TorchLMHeadCPO
-from test.utils import assert_verbose_allclose
-from test.utils import set_seed
-
 import pytest
 import torch
 
@@ -9,6 +5,9 @@ from liger_kernel.chunked_loss import LigerFusedLinearSimPOLoss
 from liger_kernel.chunked_loss.functional import liger_fused_linear_simpo
 from liger_kernel.chunked_loss.simpo_loss import LigerFusedLinearSimPOFunction
 from liger_kernel.utils import infer_device
+from test.chunked_loss.test_cpo_loss import TorchLMHeadCPO
+from test.utils import assert_verbose_allclose
+from test.utils import set_seed
 
 device = infer_device()
 

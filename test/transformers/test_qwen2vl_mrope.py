@@ -1,7 +1,7 @@
-from test.utils import supports_bfloat16
-
 import pytest
 import torch
+
+from test.utils import supports_bfloat16
 
 try:
     from transformers.models.qwen2_vl.modeling_qwen2_vl import Qwen2VLRotaryEmbedding

@@ -1,8 +1,7 @@
-from test.chunked_loss.test_dpo_loss import HF_DPO_Loss
-
 import torch
 import triton
 
+from test.chunked_loss.test_dpo_loss import HF_DPO_Loss
 from utils import QUANTILES
 from utils import SingleBenchmarkRunInput
 from utils import SingleBenchmarkRunOutput

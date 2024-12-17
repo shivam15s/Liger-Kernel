@@ -1,8 +1,7 @@
-from test.utils import supports_bfloat16
-
 import pytest
 import torch
 
+from test.utils import supports_bfloat16
 from transformers.models.llama.modeling_llama import LlamaRotaryEmbedding
 from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
 

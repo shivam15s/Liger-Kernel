@@ -1,7 +1,3 @@
-from test.utils import HFAlignmentLoss
-from test.utils import assert_verbose_allclose
-from test.utils import set_seed
-
 import pytest
 import torch
 import torch.nn.functional as F
@@ -10,6 +6,9 @@ from liger_kernel.chunked_loss import LigerFusedLinearDPOLoss
 from liger_kernel.chunked_loss.dpo_loss import LigerFusedLinearDPOFunction
 from liger_kernel.chunked_loss.functional import liger_fused_linear_dpo
 from liger_kernel.utils import infer_device
+from test.utils import HFAlignmentLoss
+from test.utils import assert_verbose_allclose
+from test.utils import set_seed
 
 device = infer_device()
 

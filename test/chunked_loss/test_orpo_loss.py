@@ -1,6 +1,3 @@
-from test.utils import HFAlignmentLoss
-from test.utils import assert_verbose_allclose
-from test.utils import set_seed
 from typing import Tuple
 
 import pytest
@@ -11,6 +8,9 @@ from liger_kernel.chunked_loss import LigerFusedLinearORPOLoss
 from liger_kernel.chunked_loss.functional import liger_fused_linear_orpo
 from liger_kernel.chunked_loss.orpo_loss import LigerFusedLinearORPOFunction
 from liger_kernel.utils import infer_device
+from test.utils import HFAlignmentLoss
+from test.utils import assert_verbose_allclose
+from test.utils import set_seed
 
 device = infer_device()
 
