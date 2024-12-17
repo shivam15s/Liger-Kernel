@@ -2,6 +2,7 @@ from test.utils import supports_bfloat16
 
 import pytest
 import torch
+
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.models.llama.modeling_llama import LlamaMLP
 
@@ -38,9 +39,7 @@ SLEEP_SECONDS = 0.1
             torch.bfloat16,
             1e4,
             6e-3,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
     ],
 )

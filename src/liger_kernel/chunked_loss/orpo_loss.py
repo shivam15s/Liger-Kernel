@@ -1,9 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from liger_kernel.chunked_loss.fused_linear_preference import (
-    LigerFusedLinearPreferenceBase,
-)
+from liger_kernel.chunked_loss.fused_linear_preference import LigerFusedLinearPreferenceBase
 
 
 class LigerFusedLinearORPOFunction(LigerFusedLinearPreferenceBase):
@@ -31,8 +29,7 @@ class LigerFusedLinearORPOFunction(LigerFusedLinearPreferenceBase):
             beta (float): Weight for the odds ratio loss.
         """
         log_odds = (chosen_logps - rejected_logps) - (
-            torch.log1p(-torch.exp(chosen_logps))
-            - torch.log1p(-torch.exp(rejected_logps))
+            torch.log1p(-torch.exp(chosen_logps)) - torch.log1p(-torch.exp(rejected_logps))
         )
         ratio = F.logsigmoid(log_odds)
         loss = beta * ratio.sum() / (full_target.shape[0] // 2)

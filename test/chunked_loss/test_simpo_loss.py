@@ -1,5 +1,6 @@
 from test.chunked_loss.test_cpo_loss import TorchLMHeadCPO
-from test.utils import assert_verbose_allclose, set_seed
+from test.utils import assert_verbose_allclose
+from test.utils import set_seed
 
 import pytest
 import torch
@@ -28,12 +29,8 @@ class LigerLMHeadSimPO(torch.nn.Module):
         gamma: float = 0.5,
     ):
         super().__init__()
-        self.lin = torch.nn.Linear(
-            in_features=H, out_features=V, bias=bias, dtype=dtype
-        )
-        self.simpo_loss = LigerFusedLinearSimPOLoss(
-            ignore_index=ignore_index, beta=beta, alpha=alpha, gamma=gamma
-        )
+        self.lin = torch.nn.Linear(in_features=H, out_features=V, bias=bias, dtype=dtype)
+        self.simpo_loss = LigerFusedLinearSimPOLoss(ignore_index=ignore_index, beta=beta, alpha=alpha, gamma=gamma)
 
     def forward(self, x, y):
         return self.simpo_loss(self.lin.weight, x, y, self.lin.bias)
@@ -54,12 +51,8 @@ class LigerLMHeadSimPO(torch.nn.Module):
     ],
 )
 @pytest.mark.parametrize("bias", [True, False])
-@pytest.mark.parametrize(
-    "ignore_index, beta, gamma", [(-100, 0.1, 0.5), (42, 0.2, 0.85)]
-)
-def test_correctness(
-    B, T, H, V, scalar, dtype, atol, rtol, bias, ignore_index, beta, gamma
-):
+@pytest.mark.parametrize("ignore_index, beta, gamma", [(-100, 0.1, 0.5), (42, 0.2, 0.85)])
+def test_correctness(B, T, H, V, scalar, dtype, atol, rtol, bias, ignore_index, beta, gamma):
     B = 2 * B  # SimPO loss requires B to be even
 
     torch_lm_head_simpo = TorchLMHeadCPO(
@@ -82,13 +75,13 @@ def test_correctness(
         gamma=gamma,
     )
 
-    torch_lm_head_simpo.lin.weight.data = liger_lm_head_simpo.lin.weight.data = (
-        torch.randn(V, H, device=device, dtype=dtype)
+    torch_lm_head_simpo.lin.weight.data = liger_lm_head_simpo.lin.weight.data = torch.randn(
+        V, H, device=device, dtype=dtype
     )
 
     if bias:
-        torch_lm_head_simpo.lin.bias.data = liger_lm_head_simpo.lin.bias.data = (
-            torch.randn(V, device=device, dtype=dtype)
+        torch_lm_head_simpo.lin.bias.data = liger_lm_head_simpo.lin.bias.data = torch.randn(
+            V, device=device, dtype=dtype
         )
 
     _input = torch.randn(B, T, H, device=device, dtype=dtype) * scalar
@@ -185,12 +178,8 @@ def test_correctness_functional(B, T, H, V, scalar, dtype, atol, rtol, bias):
     bias1 = _bias.detach().clone().requires_grad_(True) if bias else None
     bias2 = _bias.detach().clone().requires_grad_(True) if bias else None
 
-    loss1, aggregated_aux_outputs1 = LigerFusedLinearSimPOFunction.apply(
-        input1, weight1, target, bias1
-    )
-    loss2, aggregated_aux_outputs2 = liger_fused_linear_simpo(
-        input2, weight2, target, bias2
-    )
+    loss1, aggregated_aux_outputs1 = LigerFusedLinearSimPOFunction.apply(input1, weight1, target, bias1)
+    loss2, aggregated_aux_outputs2 = liger_fused_linear_simpo(input2, weight2, target, bias2)
 
     assert_verbose_allclose(loss1, loss2, atol=atol, rtol=rtol)
 

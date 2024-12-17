@@ -1,14 +1,13 @@
 import torch
 import triton
+
 from torch.nn import CrossEntropyLoss
-from utils import (
-    QUANTILES,
-    SingleBenchmarkRunInput,
-    SingleBenchmarkRunOutput,
-    _test_memory,
-    parse_benchmark_script_args,
-    run_benchmarks,
-)
+from utils import QUANTILES
+from utils import SingleBenchmarkRunInput
+from utils import SingleBenchmarkRunOutput
+from utils import _test_memory
+from utils import parse_benchmark_script_args
+from utils import run_benchmarks
 
 from liger_kernel.transformers.cross_entropy import LigerCrossEntropyLoss
 from liger_kernel.utils import infer_device
@@ -86,9 +85,7 @@ def bench_speed_cross_entropy(
             y = fwd()
             y.backward()
 
-        ms_50, ms_20, ms_80 = triton.testing.do_bench(
-            full, rep=100, quantiles=QUANTILES
-        )
+        ms_50, ms_20, ms_80 = triton.testing.do_bench(full, rep=100, quantiles=QUANTILES)
 
     return SingleBenchmarkRunOutput(
         y_20=ms_20,
