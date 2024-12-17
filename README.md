@@ -55,7 +55,7 @@
 
 <img src="https://raw.githubusercontent.com/linkedin/Liger-Kernel/main/docs/images/logo-banner.png">
 
-[Installation](#installation) | [Getting Started](#getting-started) | [Examples](#examples) | [High-level APIs](#high-level-apis) | [Low-level APIs](#low-level-apis) | [Cite our work](#cite-this-work)
+[Installation](#installation) | [Getting Started](#getting-started) | [Examples](#examples) | [Documentation](#documentation) | [High-level APIs](#high-level-apis) | [Low-level APIs](#low-level-apis) | [Cite our work](#cite-this-work)
 
 <details>
   <summary>Latest News 🔥</summary>
@@ -125,6 +125,8 @@ y = orpo_loss(lm_head.weight, x, target)
 - **Trainer Framework Integration**: [Axolotl](https://github.com/axolotl-ai-cloud/axolotl), [LLaMa-Factory](https://github.com/hiyouga/LLaMA-Factory), [SFTTrainer](https://github.com/huggingface/trl/releases/tag/v0.10.1), [Hugging Face Trainer](https://github.com/huggingface/transformers/pull/32860), [SWIFT](https://github.com/modelscope/ms-swift)
 
 ## Installation
+
+For detailed installation instructions, troubleshooting, and platform-specific guides, see our [Installation Guide](docs/getting-started/installation.md).
 
 ### Dependencies
 
@@ -256,6 +258,45 @@ loss.backward()
 | Qwen2-VL       | `liger_kernel.transformers.apply_liger_kernel_to_qwen2_vl`    | RMSNorm, LayerNorm, SwiGLU, CrossEntropyLoss, FusedLinearCrossEntropy        |
 | Phi3 & Phi3.5       | `liger_kernel.transformers.apply_liger_kernel_to_phi3`     | RoPE, RMSNorm, SwiGLU, CrossEntropyLoss, FusedLinearCrossEntropy         |
 
+## Documentation
+
+Our documentation is organized to support users at all experience levels, from getting started to advanced usage:
+
+### Getting Started
+- [Installation Guide](docs/getting-started/installation.md) - Comprehensive setup instructions
+- [Quick Start Guide](docs/getting-started/quickstart.md) - Get up and running quickly
+- [Troubleshooting Guide](docs/getting-started/troubleshooting.md) - Common issues and solutions
+
+### User Guides
+- [Performance Optimization](docs/guides/performance-optimization.md) - Tips for maximizing performance
+- [Advanced Usage](docs/guides/advanced-usage.md) - Advanced features and techniques
+- [Model Patching](docs/guides/model-patching.md) - Guide to patching different models
+
+### API Reference
+- [Kernels API](docs/api/kernels.md) - Core kernel implementations
+- [Models API](docs/api/models.md) - Model-specific APIs
+- [Losses API](docs/api/losses.md) - Loss function implementations
+
+### Quick Troubleshooting Tips
+1. **Memory Issues**
+   - Use `LigerFusedLinearCrossEntropyLoss` for up to 60% memory reduction
+   - Enable gradient checkpointing in your trainer
+   - Consider using smaller batch sizes or sequence lengths
+
+2. **Performance Optimization**
+   - Ensure you're using the latest CUDA/ROCm drivers
+   - Try the nightly version for latest optimizations: `pip install liger-kernel-nightly`
+   - Check our [Performance Optimization Guide](docs/guides/performance-optimization.md)
+
+3. **Installation Issues**
+   - Verify PyTorch (>= 2.1.2 for CUDA, >= 2.5.0 for ROCm) is installed
+   - Ensure Triton (>= 2.3.0 for CUDA, >= 3.0.0 for ROCm) is installed
+   - See our [Installation Guide](docs/getting-started/installation.md) for detailed steps
+
+4. **Model Compatibility**
+   - Check the supported models table above
+   - Use `AutoLigerKernelForCausalLM` for automatic model patching
+   - Follow our [Model Patching Guide](docs/guides/model-patching.md) for custom models
 
 ## Low-level APIs
 
