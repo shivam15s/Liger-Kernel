@@ -8,7 +8,7 @@ Thank you for your interest in contributing to Liger-Kernel! This guide will hel
 
 ## Interested in the ticket?
 
-Leave `#take` in the comment and tag the maintainer. 
+Leave `#take` in the comment and tag the maintainer.
 
 ## Setting Up Your Development Environment
 
@@ -67,6 +67,65 @@ Create unit tests and convergence tests for your kernel in the tests directory. 
 
 3. **Add Benchmark Script**
 Add a benchmarking script under `benchmark/scripts` using the naming convention `benchmark_{kernel_name}.py` showing the performance difference between the Liger kernel and HuggingFace.
+
+## Documentation Guidelines
+
+### Documentation Structure
+- Each documentation file should follow a clear, consistent structure:
+  - Overview/Introduction
+  - Prerequisites (if applicable)
+  - Main content with clear headings
+  - Examples and code snippets
+  - Troubleshooting section (if applicable)
+  - Related resources and next steps
+
+### Documentation Style
+- Write clear, concise explanations suitable for different user levels
+- Use consistent formatting throughout:
+  - H1 (`#`) for document title
+  - H2 (`##`) for main sections
+  - H3 (`###`) for subsections
+  - Code blocks with appropriate language tags
+- Include practical code examples where relevant
+- Add diagrams or screenshots for complex concepts
+- Maintain clear navigation with links to related docs
+- Use consistent terminology throughout
+
+### Documentation Requirements
+Each guide should include:
+1. Clear explanations of concepts
+2. Practical code examples
+3. Common pitfalls and solutions
+4. Best practices
+5. Links to related documentation
+
+### Documentation Types
+1. **Getting Started Guides**
+   - Focus on clarity for new users
+   - Include complete, working examples
+   - Explain prerequisites clearly
+   - Link to troubleshooting guide
+
+2. **API Documentation**
+   - Include type signatures
+   - Provide usage examples
+   - Document parameters and return values
+   - Note any limitations or requirements
+
+3. **Advanced Guides**
+   - Include performance considerations
+   - Provide optimization tips
+   - Show complex integration examples
+   - Reference related API docs
+
+### Documentation PR Requirements
+When submitting documentation changes:
+1. Ensure all links are valid
+2. Verify code examples are correct and tested
+3. Check formatting consistency
+4. Include updates to related docs if needed
+5. Add entries to navigation if new pages
+6. Preview rendered markdown locally
 
 ## Run tests
 
