@@ -2,10 +2,9 @@ from test.utils import supports_bfloat16
 
 import pytest
 import torch
-from transformers.models.llama.modeling_llama import (
-    LlamaRotaryEmbedding,
-    apply_rotary_pos_emb,
-)
+
+from transformers.models.llama.modeling_llama import LlamaRotaryEmbedding
+from transformers.models.llama.modeling_llama import apply_rotary_pos_emb
 
 from liger_kernel.ops.rope import LigerRopeFunction
 from liger_kernel.transformers.functional import liger_rope

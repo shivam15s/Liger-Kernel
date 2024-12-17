@@ -1,14 +1,13 @@
 import torch
-from torch.nn import Embedding
 import triton
-from utils import (
-    QUANTILES,
-    SingleBenchmarkRunInput,
-    SingleBenchmarkRunOutput,
-    _test_memory,
-    parse_benchmark_script_args,
-    run_benchmarks,
-)
+
+from torch.nn import Embedding
+from utils import QUANTILES
+from utils import SingleBenchmarkRunInput
+from utils import SingleBenchmarkRunOutput
+from utils import _test_memory
+from utils import parse_benchmark_script_args
+from utils import run_benchmarks
 
 from liger_kernel.transformers.experimental.embedding import LigerEmbedding
 from liger_kernel.utils import infer_device

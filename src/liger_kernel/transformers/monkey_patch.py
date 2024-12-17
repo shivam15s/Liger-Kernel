@@ -1,49 +1,37 @@
-from functools import partial
 import inspect
 import logging
+
+from functools import partial
 from typing import Callable
 
-from packaging import version
 import transformers
+
+from packaging import version
 from transformers import PreTrainedModel
 
 from liger_kernel.transformers.cross_entropy import LigerCrossEntropyLoss
 from liger_kernel.transformers.functional import liger_cross_entropy
 from liger_kernel.transformers.geglu import LigerGEGLUMLP
 from liger_kernel.transformers.layer_norm import LigerLayerNorm
-from liger_kernel.transformers.model.gemma import (
-    lce_forward as gemma_lce_forward,
-    lce_forward_deprecated as gemma_lce_forward_deprecated,
-)
-from liger_kernel.transformers.model.gemma2 import (
-    lce_forward as gemma2_lce_forward,
-    lce_forward_deprecated as gemma2_lce_forward_deprected,
-)
-from liger_kernel.transformers.model.llama import (
-    lce_forward as llama_lce_forward,
-    lce_forward_deprecated as llama_lce_forward_deprecated,
-)
+from liger_kernel.transformers.model.gemma import lce_forward as gemma_lce_forward
+from liger_kernel.transformers.model.gemma import lce_forward_deprecated as gemma_lce_forward_deprecated
+from liger_kernel.transformers.model.gemma2 import lce_forward as gemma2_lce_forward
+from liger_kernel.transformers.model.gemma2 import lce_forward_deprecated as gemma2_lce_forward_deprected
+from liger_kernel.transformers.model.llama import lce_forward as llama_lce_forward
+from liger_kernel.transformers.model.llama import lce_forward_deprecated as llama_lce_forward_deprecated
 from liger_kernel.transformers.model.mistral import lce_forward as mistral_lce_forward
-from liger_kernel.transformers.model.mixtral import (
-    lce_forward as mixtral_lce_forward,
-    lce_forward_deprecated as mixtral_lce_forward_deprecated,
-)
-from liger_kernel.transformers.model.phi3 import (
-    lce_forward as phi3_lce_forward,
-    lce_forward_deprecated as phi3_lce_forward_deprecated,
-)
-from liger_kernel.transformers.model.qwen2 import (
-    lce_forward as qwen2_lce_forward,
-    lce_forward_deprecated as qwen2_lce_forward_deprecated,
-)
+from liger_kernel.transformers.model.mixtral import lce_forward as mixtral_lce_forward
+from liger_kernel.transformers.model.mixtral import lce_forward_deprecated as mixtral_lce_forward_deprecated
+from liger_kernel.transformers.model.phi3 import lce_forward as phi3_lce_forward
+from liger_kernel.transformers.model.phi3 import lce_forward_deprecated as phi3_lce_forward_deprecated
+from liger_kernel.transformers.model.qwen2 import lce_forward as qwen2_lce_forward
+from liger_kernel.transformers.model.qwen2 import lce_forward_deprecated as qwen2_lce_forward_deprecated
 from liger_kernel.transformers.qwen2vl_mrope import liger_multimodal_rotary_pos_emb
 from liger_kernel.transformers.rms_norm import LigerRMSNorm
 from liger_kernel.transformers.rope import liger_rotary_pos_emb
-from liger_kernel.transformers.swiglu import (
-    LigerBlockSparseTop2MLP,
-    LigerPhi3SwiGLUMLP,
-    LigerSwiGLUMLP,
-)
+from liger_kernel.transformers.swiglu import LigerBlockSparseTop2MLP
+from liger_kernel.transformers.swiglu import LigerPhi3SwiGLUMLP
+from liger_kernel.transformers.swiglu import LigerSwiGLUMLP
 
 transformer_version = version.parse(transformers.__version__)
 
@@ -176,17 +164,13 @@ def apply_liger_kernel_to_mllama(
     ), "cross_entropy and fused_linear_cross_entropy cannot both be True."
 
     from transformers.models.mllama import modeling_mllama
-    from transformers.models.mllama.modeling_mllama import (
-        MllamaForCausalLM,
-        MllamaForConditionalGeneration,
-        MllamaTextModel,
-        MllamaVisionModel,
-    )
+    from transformers.models.mllama.modeling_mllama import MllamaForCausalLM
+    from transformers.models.mllama.modeling_mllama import MllamaForConditionalGeneration
+    from transformers.models.mllama.modeling_mllama import MllamaTextModel
+    from transformers.models.mllama.modeling_mllama import MllamaVisionModel
 
-    from liger_kernel.transformers.model.mllama import (
-        lce_forward as mllama_lce_forward,
-        lce_forward_deprecated as mllama_lce_forward_deprecated,
-    )
+    from liger_kernel.transformers.model.mllama import lce_forward as mllama_lce_forward
+    from liger_kernel.transformers.model.mllama import lce_forward_deprecated as mllama_lce_forward_deprecated
 
     if rope:
         modeling_mllama.apply_rotary_pos_emb = liger_rotary_pos_emb
@@ -642,9 +626,7 @@ def apply_liger_kernel_to_qwen2_vl(
     from transformers.models.qwen2_vl import modeling_qwen2_vl
     from transformers.models.qwen2_vl.modeling_qwen2_vl import Qwen2VLModel
 
-    from liger_kernel.transformers.model.qwen2_vl import (
-        lce_forward as qwen2_vl_lce_forward,
-    )
+    from liger_kernel.transformers.model.qwen2_vl import lce_forward as qwen2_vl_lce_forward
 
     if rope:
         modeling_qwen2_vl.apply_multimodal_rotary_pos_emb = liger_multimodal_rotary_pos_emb

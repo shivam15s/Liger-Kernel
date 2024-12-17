@@ -1,7 +1,8 @@
-from argparse import ArgumentParser
-from dataclasses import dataclass
 import json
 import os
+
+from argparse import ArgumentParser
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import pandas as pd

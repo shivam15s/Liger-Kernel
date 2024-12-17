@@ -1,4 +1,6 @@
-from test.utils import HFAlignmentLoss, assert_verbose_allclose, set_seed
+from test.utils import HFAlignmentLoss
+from test.utils import assert_verbose_allclose
+from test.utils import set_seed
 
 import pytest
 import torch

@@ -4,7 +4,8 @@ import torch
 import triton
 import triton.language as tl
 
-from liger_kernel.ops.utils import compare_version, ensure_contiguous
+from liger_kernel.ops.utils import compare_version
+from liger_kernel.ops.utils import ensure_contiguous
 
 if compare_version("triton", operator.ge, "3.0.0"):
     try:

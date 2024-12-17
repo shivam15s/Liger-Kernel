@@ -1,11 +1,10 @@
 import inspect
 
-from transformers import AutoConfig, AutoModelForCausalLM
+from transformers import AutoConfig
+from transformers import AutoModelForCausalLM
 
-from liger_kernel.transformers.monkey_patch import (
-    MODEL_TYPE_TO_APPLY_LIGER_FN,
-    _apply_liger_kernel,
-)
+from liger_kernel.transformers.monkey_patch import MODEL_TYPE_TO_APPLY_LIGER_FN
+from liger_kernel.transformers.monkey_patch import _apply_liger_kernel
 
 
 def _get_model_config(model_dir, **model_init_kwargs):

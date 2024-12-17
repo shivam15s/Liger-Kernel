@@ -1,21 +1,19 @@
-from typing import List, Optional, Tuple, Union
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import torch
+
 from torch.nn import CrossEntropyLoss
 from transformers.cache_utils import Cache
 from transformers.modeling_outputs import CausalLMOutputWithPast
-from transformers.models.mistral.modeling_mistral import (
-    _CONFIG_FOR_DOC,
-    MISTRAL_INPUTS_DOCSTRING,
-)
-from transformers.utils import (
-    add_start_docstrings_to_model_forward,
-    replace_return_docstrings,
-)
+from transformers.models.mistral.modeling_mistral import _CONFIG_FOR_DOC
+from transformers.models.mistral.modeling_mistral import MISTRAL_INPUTS_DOCSTRING
+from transformers.utils import add_start_docstrings_to_model_forward
+from transformers.utils import replace_return_docstrings
 
-from liger_kernel.transformers.fused_linear_cross_entropy import (
-    LigerFusedLinearCrossEntropyLoss,
-)
+from liger_kernel.transformers.fused_linear_cross_entropy import LigerFusedLinearCrossEntropyLoss
 
 
 @add_start_docstrings_to_model_forward(MISTRAL_INPUTS_DOCSTRING)

@@ -1,6 +1,7 @@
-from importlib.metadata import version
 import platform
 import sys
+
+from importlib.metadata import version
 
 
 def print_env_report():

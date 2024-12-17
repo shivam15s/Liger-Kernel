@@ -1,8 +1,15 @@
-from typing import Any, Callable, Dict, List, Literal, Tuple, Union
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Literal
+from typing import Tuple
+from typing import Union
 
 import torch
-from torch.distributed.fsdp import FullyShardedDataParallel
 import torch.nn as nn
+
+from torch.distributed.fsdp import FullyShardedDataParallel
 from trl.trainer import ORPOTrainer
 
 from liger_kernel.chunked_loss import LigerFusedLinearORPOLoss

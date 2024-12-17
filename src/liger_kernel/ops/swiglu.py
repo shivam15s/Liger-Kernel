@@ -2,7 +2,8 @@ import torch
 import triton
 import triton.language as tl
 
-from liger_kernel.ops.utils import calculate_settings, ensure_contiguous
+from liger_kernel.ops.utils import calculate_settings
+from liger_kernel.ops.utils import ensure_contiguous
 
 
 @triton.jit

@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 
-from callback import EfficiencyCallback
 import datasets
 import torch
 import transformers
-from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+
+from callback import EfficiencyCallback
+from trl import DataCollatorForCompletionOnlyLM
+from trl import SFTTrainer
 
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
 

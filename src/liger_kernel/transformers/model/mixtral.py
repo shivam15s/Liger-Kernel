@@ -1,21 +1,19 @@
-from typing import List, Optional, Tuple, Union
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import torch
+
 from torch.nn import CrossEntropyLoss
 from transformers.modeling_outputs import MoeCausalLMOutputWithPast
-from transformers.models.mixtral.modeling_mixtral import (
-    _CONFIG_FOR_DOC,
-    MIXTRAL_INPUTS_DOCSTRING,
-    load_balancing_loss_func,
-)
-from transformers.utils import (
-    add_start_docstrings_to_model_forward,
-    replace_return_docstrings,
-)
+from transformers.models.mixtral.modeling_mixtral import _CONFIG_FOR_DOC
+from transformers.models.mixtral.modeling_mixtral import MIXTRAL_INPUTS_DOCSTRING
+from transformers.models.mixtral.modeling_mixtral import load_balancing_loss_func
+from transformers.utils import add_start_docstrings_to_model_forward
+from transformers.utils import replace_return_docstrings
 
-from liger_kernel.transformers.fused_linear_cross_entropy import (
-    LigerFusedLinearCrossEntropyLoss,
-)
+from liger_kernel.transformers.fused_linear_cross_entropy import LigerFusedLinearCrossEntropyLoss
 
 
 @add_start_docstrings_to_model_forward(MIXTRAL_INPUTS_DOCSTRING)

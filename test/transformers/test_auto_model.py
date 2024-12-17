@@ -1,14 +1,14 @@
 from inspect import signature
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from unittest.mock import patch
 
-from transformers import AutoConfig, AutoModelForCausalLM
+from transformers import AutoConfig
+from transformers import AutoModelForCausalLM
 
 from liger_kernel.transformers import AutoLigerKernelForCausalLM
-from liger_kernel.transformers.monkey_patch import (
-    MODEL_TYPE_TO_APPLY_LIGER_FN,
-    apply_liger_kernel_to_llama,
-)
+from liger_kernel.transformers.monkey_patch import MODEL_TYPE_TO_APPLY_LIGER_FN
+from liger_kernel.transformers.monkey_patch import apply_liger_kernel_to_llama
 
 
 def test_auto_liger_kernel_for_causal_lm_from_pretrained():

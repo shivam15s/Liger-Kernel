@@ -16,24 +16,26 @@
 
 # Adapted from: https://github.com/lm-sys/FastChat/blob/main/fastchat/train/train.py
 
-from dataclasses import dataclass, field
 import json
 import os
 import pathlib
-from typing import Dict, Optional
+
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Dict
+from typing import Optional
+
+import torch
+import transformers
 
 from callback import EfficiencyCallback
 from medusa_util import add_medusa_heads
 from safetensors.torch import save_file
 from sklearn.model_selection import train_test_split
-import torch
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp.fully_sharded_data_parallel import (
-    FullStateDictConfig,
-    StateDictType,
-)
+from torch.distributed.fsdp.fully_sharded_data_parallel import FullStateDictConfig
+from torch.distributed.fsdp.fully_sharded_data_parallel import StateDictType
 from torch.utils.data import Dataset
-import transformers
 from transformers import Trainer
 from transformers.trainer_pt_utils import LabelSmoother
 

@@ -1,19 +1,26 @@
-from abc import abstractmethod
-from dataclasses import dataclass
 import importlib
 import json
 import os
 import random
-from typing import Any, Dict, List, Tuple
+
+from abc import abstractmethod
+from dataclasses import dataclass
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 import numpy as np
-from tokenizers import AddedToken, Tokenizer
+import torch
+import torch.nn as nn
+
+from tokenizers import AddedToken
+from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.trainers import BpeTrainer
-import torch
-import torch.nn as nn
-from transformers import PretrainedConfig, PreTrainedModel
+from transformers import PretrainedConfig
+from transformers import PreTrainedModel
 from transformers.tokenization_utils_base import BatchEncoding
 
 from liger_kernel.utils import infer_device
@@ -228,6 +235,7 @@ def revert_liger_kernel_to_mllama(model_config: MiniModelConfig, model_type: str
         "conditional_generation",
     ], f'model_type must be "causal_lm" or "conditional_generation", Got: {model_type}'
     import torch.nn as nn
+
     from transformers.models.mllama import modeling_mllama
 
     importlib.reload(nn)

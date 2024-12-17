@@ -1,9 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from liger_kernel.chunked_loss.fused_linear_preference import (
-    LigerFusedLinearPreferenceBase,
-)
+from liger_kernel.chunked_loss.fused_linear_preference import LigerFusedLinearPreferenceBase
 
 
 class LigerFusedLinearSimPOFunction(LigerFusedLinearPreferenceBase):

@@ -1,40 +1,34 @@
 import functools
 import os
-from test.utils import (
-    FAKE_CONFIGS_PATH,
-    UNTOKENIZED_DATASET_PATH,
-    MiniModelConfig,
-    assert_verbose_allclose,
-    load_tokenizer_config,
-    multimodal_collate_fn,
-    revert_liger_kernel_to_mllama,
-    revert_liger_kernel_to_qwen2_vl,
-    set_seed,
-    supports_bfloat16,
-    train_bpe_tokenizer,
-)
 
-from datasets import load_dataset
+from test.utils import FAKE_CONFIGS_PATH
+from test.utils import UNTOKENIZED_DATASET_PATH
+from test.utils import MiniModelConfig
+from test.utils import assert_verbose_allclose
+from test.utils import load_tokenizer_config
+from test.utils import multimodal_collate_fn
+from test.utils import revert_liger_kernel_to_mllama
+from test.utils import revert_liger_kernel_to_qwen2_vl
+from test.utils import set_seed
+from test.utils import supports_bfloat16
+from test.utils import train_bpe_tokenizer
+
 import pytest
 import torch
+
+from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizerFast
 
-from liger_kernel.transformers import (
-    apply_liger_kernel_to_mllama,
-    apply_liger_kernel_to_qwen2_vl,
-)
+from liger_kernel.transformers import apply_liger_kernel_to_mllama
+from liger_kernel.transformers import apply_liger_kernel_to_qwen2_vl
 
 try:
     # Qwen2-VL is only available in transformers>=4.45.0
     from transformers.models.qwen2.tokenization_qwen2_fast import Qwen2TokenizerFast
     from transformers.models.qwen2_vl.configuration_qwen2_vl import Qwen2VLConfig
-    from transformers.models.qwen2_vl.image_processing_qwen2_vl import (
-        Qwen2VLImageProcessor,
-    )
-    from transformers.models.qwen2_vl.modeling_qwen2_vl import (
-        Qwen2VLForConditionalGeneration,
-    )
+    from transformers.models.qwen2_vl.image_processing_qwen2_vl import Qwen2VLImageProcessor
+    from transformers.models.qwen2_vl.modeling_qwen2_vl import Qwen2VLForConditionalGeneration
     from transformers.models.qwen2_vl.processing_qwen2_vl import Qwen2VLProcessor
 
     QWEN2_VL_AVAILABLE = True
@@ -43,15 +37,11 @@ except ImportError:
 
 try:
     # Mllama is only available in transformers>=4.45.0
-    from transformers.models.mllama.configuration_mllama import (
-        MllamaConfig,
-        MllamaTextConfig,
-        MllamaVisionConfig,
-    )
+    from transformers.models.mllama.configuration_mllama import MllamaConfig
+    from transformers.models.mllama.configuration_mllama import MllamaTextConfig
+    from transformers.models.mllama.configuration_mllama import MllamaVisionConfig
     from transformers.models.mllama.image_processing_mllama import MllamaImageProcessor
-    from transformers.models.mllama.modeling_mllama import (
-        MllamaForConditionalGeneration,
-    )
+    from transformers.models.mllama.modeling_mllama import MllamaForConditionalGeneration
     from transformers.models.mllama.processing_mllama import MllamaProcessor
 
     MLLAMA_AVAILABLE = True

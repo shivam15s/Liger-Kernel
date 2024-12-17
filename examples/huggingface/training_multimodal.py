@@ -1,11 +1,13 @@
-from dataclasses import dataclass
 import os
 
-from callback import EfficiencyCallback
+from dataclasses import dataclass
+
 import datasets
-from datasets import Image as ImageFeature
 import torch
 import transformers
+
+from callback import EfficiencyCallback
+from datasets import Image as ImageFeature
 from trl import SFTTrainer
 
 from liger_kernel.transformers import monkey_patch

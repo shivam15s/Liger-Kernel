@@ -1,15 +1,16 @@
 import types
-from typing import List, Optional
+
+from typing import List
+from typing import Optional
 
 import torch
+
 from torch import nn
 from torch.nn import CrossEntropyLoss
 from transformers import PretrainedConfig
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from liger_kernel.transformers.fused_linear_cross_entropy import (
-    LigerFusedLinearCrossEntropyLoss,
-)
+from liger_kernel.transformers.fused_linear_cross_entropy import LigerFusedLinearCrossEntropyLoss
 
 
 class MedusaConfig(PretrainedConfig):

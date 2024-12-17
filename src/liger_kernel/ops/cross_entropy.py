@@ -1,11 +1,14 @@
 import operator
+
 from typing import Optional
 
 import torch
 import triton
 import triton.language as tl
 
-from liger_kernel.ops.utils import compare_version, element_mul_kernel, is_hip
+from liger_kernel.ops.utils import compare_version
+from liger_kernel.ops.utils import element_mul_kernel
+from liger_kernel.ops.utils import is_hip
 
 if compare_version("triton", operator.ge, "3.0.0"):
     try:

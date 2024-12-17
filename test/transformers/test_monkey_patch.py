@@ -1,26 +1,28 @@
 import inspect
+
 from inspect import signature
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import pytest
 import torch
 import transformers
-from transformers import AutoModelForCausalLM, PretrainedConfig, PreTrainedModel
 
-from liger_kernel.transformers import (
-    LigerBlockSparseTop2MLP,
-    LigerGEGLUMLP,
-    LigerPhi3SwiGLUMLP,
-    LigerRMSNorm,
-    LigerSwiGLUMLP,
-    monkey_patch,
-)
+from transformers import AutoModelForCausalLM
+from transformers import PretrainedConfig
+from transformers import PreTrainedModel
+
+from liger_kernel.transformers import LigerBlockSparseTop2MLP
+from liger_kernel.transformers import LigerGEGLUMLP
+from liger_kernel.transformers import LigerPhi3SwiGLUMLP
+from liger_kernel.transformers import LigerRMSNorm
+from liger_kernel.transformers import LigerSwiGLUMLP
+from liger_kernel.transformers import monkey_patch
 from liger_kernel.transformers.layer_norm import LigerLayerNorm
-from liger_kernel.transformers.monkey_patch import (
-    MODEL_TYPE_TO_APPLY_LIGER_FN,
-    _apply_liger_kernel,
-    _apply_liger_kernel_to_instance,
-)
+from liger_kernel.transformers.monkey_patch import MODEL_TYPE_TO_APPLY_LIGER_FN
+from liger_kernel.transformers.monkey_patch import _apply_liger_kernel
+from liger_kernel.transformers.monkey_patch import _apply_liger_kernel_to_instance
 
 
 # Check if optional modules are available
@@ -44,18 +46,16 @@ def is_qwen2_vl_available():
 
 def test_import_from_root():
     try:
-        from liger_kernel.transformers import (  # noqa: F401
-            AutoLigerKernelForCausalLM,
-            apply_liger_kernel_to_gemma,
-            apply_liger_kernel_to_gemma2,
-            apply_liger_kernel_to_llama,
-            apply_liger_kernel_to_mistral,
-            apply_liger_kernel_to_mixtral,
-            apply_liger_kernel_to_mllama,
-            apply_liger_kernel_to_phi3,
-            apply_liger_kernel_to_qwen2,
-            apply_liger_kernel_to_qwen2_vl,
-        )
+        from liger_kernel.transformers import AutoLigerKernelForCausalLM  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_gemma  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_gemma2  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_llama  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_mistral  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_mixtral  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_mllama  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_phi3  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_qwen2  # noqa: F401
+        from liger_kernel.transformers import apply_liger_kernel_to_qwen2_vl  # noqa: F401
     except Exception:
         pytest.fail("Import kernel patch from root fails")
 
@@ -263,9 +263,7 @@ def test_apply_liger_kernel_to_instance_for_llama():
 def test_apply_liger_kernel_to_instance_for_mllama_for_conditional_generation():
     # Ensure any monkey patching is cleaned up for subsequent tests
     with patch("transformers.models.mllama.modeling_mllama"):
-        from transformers.models.mllama.modeling_mllama import (
-            MllamaForConditionalGeneration,
-        )
+        from transformers.models.mllama.modeling_mllama import MllamaForConditionalGeneration
 
         # Instantiate a dummy model
         config = transformers.models.mllama.configuration_mllama.MllamaConfig(
@@ -608,9 +606,7 @@ def test_apply_liger_kernel_to_instance_for_qwen2():
 def test_apply_liger_kernel_to_instance_for_qwen2_vl():
     # Ensure any monkey patching is cleaned up for subsequent tests
     with patch("transformers.models.qwen2_vl.modeling_qwen2_vl"):
-        from transformers.models.qwen2_vl.modeling_qwen2_vl import (
-            Qwen2VLForConditionalGeneration,
-        )
+        from transformers.models.qwen2_vl.modeling_qwen2_vl import Qwen2VLForConditionalGeneration
 
         # Instantiate a dummy model
         config = transformers.models.qwen2_vl.configuration_qwen2_vl.Qwen2VLConfig(

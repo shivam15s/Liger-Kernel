@@ -4,7 +4,8 @@ import torch
 import triton
 import triton.language as tl
 
-from liger_kernel.ops.utils import ensure_contiguous, is_hip
+from liger_kernel.ops.utils import ensure_contiguous
+from liger_kernel.ops.utils import is_hip
 
 
 def get_num_warps(BLOCK_SIZE):

@@ -4,10 +4,8 @@ import pytest
 import torch
 
 try:
-    from transformers.models.qwen2_vl.modeling_qwen2_vl import (
-        Qwen2VLRotaryEmbedding,
-        apply_multimodal_rotary_pos_emb,
-    )
+    from transformers.models.qwen2_vl.modeling_qwen2_vl import Qwen2VLRotaryEmbedding
+    from transformers.models.qwen2_vl.modeling_qwen2_vl import apply_multimodal_rotary_pos_emb
 
     IS_QWEN_AVAILABLE = True
 except Exception:

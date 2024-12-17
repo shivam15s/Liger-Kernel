@@ -1,22 +1,20 @@
 import logging
-from typing import Optional, Tuple, Union
+
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import torch
+
 from torch.nn import CrossEntropyLoss
 from transformers.cache_utils import HybridCache
 from transformers.modeling_outputs import CausalLMOutputWithPast
-from transformers.models.gemma2.modeling_gemma2 import (
-    _CONFIG_FOR_DOC,
-    GEMMA2_INPUTS_DOCSTRING,
-)
-from transformers.utils import (
-    add_start_docstrings_to_model_forward,
-    replace_return_docstrings,
-)
+from transformers.models.gemma2.modeling_gemma2 import _CONFIG_FOR_DOC
+from transformers.models.gemma2.modeling_gemma2 import GEMMA2_INPUTS_DOCSTRING
+from transformers.utils import add_start_docstrings_to_model_forward
+from transformers.utils import replace_return_docstrings
 
-from liger_kernel.transformers.fused_linear_cross_entropy import (
-    LigerFusedLinearCrossEntropyLoss,
-)
+from liger_kernel.transformers.fused_linear_cross_entropy import LigerFusedLinearCrossEntropyLoss
 
 logger = logging.getLogger(__name__)
 

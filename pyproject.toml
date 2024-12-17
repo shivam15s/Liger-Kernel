@@ -29,13 +29,12 @@ log_cli_level = "INFO"
 line-length = 120
 target-version = "py310"
 respect-gitignore = true
-src = [".", "src"]
+src = ["src"]
 
 [tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "F",  # pyflakes
-    "B",  # flake8-bugbear
     "I",  # isort
 ]
 ignore = ["E501", "B006", "E731", "A002", "E203"]
@@ -54,9 +53,6 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.ruff.lint.isort]
-combine-as-imports = true
-force-sort-within-sections = true
 known-first-party = ["liger_kernel"]
-force-single-line = false
-force-wrap-aliases = false
-split-on-trailing-comma = true
+force-single-line = true
+lines-between-types = 1

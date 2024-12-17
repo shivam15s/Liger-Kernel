@@ -2,6 +2,7 @@ from test.utils import supports_bfloat16
 
 import pytest
 import torch
+
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.models.llama.modeling_llama import LlamaMLP
 from transformers.models.phi3.configuration_phi3 import Phi3Config
@@ -9,7 +10,8 @@ from transformers.models.phi3.modeling_phi3 import Phi3MLP
 
 from liger_kernel.ops.swiglu import LigerSiLUMulFunction
 from liger_kernel.transformers.functional import liger_swiglu
-from liger_kernel.transformers.swiglu import LigerPhi3SwiGLUMLP, LigerSwiGLUMLP
+from liger_kernel.transformers.swiglu import LigerPhi3SwiGLUMLP
+from liger_kernel.transformers.swiglu import LigerSwiGLUMLP
 from liger_kernel.utils import infer_device
 
 device = infer_device()

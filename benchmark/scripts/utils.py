@@ -1,13 +1,20 @@
 import argparse
-from collections import OrderedDict
 import csv
-from dataclasses import asdict, dataclass
-from importlib.metadata import version
-from itertools import zip_longest
 import json
 import os
 import time
-from typing import Any, Callable, Dict, List, Optional, Union
+
+from collections import OrderedDict
+from dataclasses import asdict
+from dataclasses import dataclass
+from importlib.metadata import version
+from itertools import zip_longest
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
 
 import torch
 

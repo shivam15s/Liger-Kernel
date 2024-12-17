@@ -1,9 +1,7 @@
 from typing import Optional
 
 from liger_kernel.ops.cross_entropy import LigerCrossEntropyFunction
-from liger_kernel.ops.fused_linear_cross_entropy import (
-    LigerFusedLinearCrossEntropyFunction,
-)
+from liger_kernel.ops.fused_linear_cross_entropy import LigerFusedLinearCrossEntropyFunction
 from liger_kernel.ops.fused_linear_jsd import LigerFusedLinearJSDFunction
 from liger_kernel.ops.geglu import LigerGELUMulFunction
 from liger_kernel.ops.group_norm import LigerGroupNormFunction

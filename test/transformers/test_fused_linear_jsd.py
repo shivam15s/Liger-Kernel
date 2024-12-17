@@ -1,5 +1,6 @@
 from test.transformers.test_jsd import JSD as TorchJSD
-from test.utils import assert_verbose_allclose, set_seed
+from test.utils import assert_verbose_allclose
+from test.utils import set_seed
 
 import pytest
 import torch

@@ -17,12 +17,10 @@ import torch
 import triton
 import triton.language as tl
 
-from liger_kernel.ops.utils import (
-    calculate_settings,
-    compare_version,
-    ensure_contiguous,
-    torch_to_triton_dtype,
-)
+from liger_kernel.ops.utils import calculate_settings
+from liger_kernel.ops.utils import compare_version
+from liger_kernel.ops.utils import ensure_contiguous
+from liger_kernel.ops.utils import torch_to_triton_dtype
 
 if compare_version("triton", operator.ge, "3.0.0"):
     try:

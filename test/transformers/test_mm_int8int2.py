@@ -1,11 +1,9 @@
 import pytest
 import torch
 
-from liger_kernel.ops.experimental.mm_int8int2 import (
-    matmul,
-    pack_weights,
-    unpack_weights,
-)
+from liger_kernel.ops.experimental.mm_int8int2 import matmul
+from liger_kernel.ops.experimental.mm_int8int2 import pack_weights
+from liger_kernel.ops.experimental.mm_int8int2 import unpack_weights
 from liger_kernel.utils import infer_device
 
 device = infer_device()
