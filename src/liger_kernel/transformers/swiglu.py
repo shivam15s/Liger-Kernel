@@ -4,6 +4,28 @@ from liger_kernel.ops.swiglu import LigerSiLUMulFunction
 
 
 class LigerSwiGLUMLP(nn.Module):
+    """Optimized SwiGLU MLP implementation using Liger Kernel.
+
+    This module provides an efficient implementation of the SwiGLU activation function
+    combined with a feed-forward network, offering improved performance over standard
+    implementations.
+
+    Args:
+        config: Model configuration object containing:
+            - hidden_size (int): Size of the input and output dimensions
+            - intermediate_size (int): Size of the intermediate (expanded) dimension
+            - hidden_act (str): Activation function type, must be "silu" or "swish"
+
+    Note:
+        This implementation fuses the SiLU activation with the multiplication operation
+        for better performance.
+
+    Examples:
+        >>> config = ModelConfig(hidden_size=768, intermediate_size=3072, hidden_act="silu")
+        >>> swiglu = LigerSwiGLUMLP(config)
+        >>> output = swiglu(hidden_states)  # Shape matches input hidden_states
+    """
+
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -23,6 +45,22 @@ class LigerSwiGLUMLP(nn.Module):
 
 
 class LigerBlockSparseTop2MLP(nn.Module):
+    """Block-sparse MLP implementation with top-2 gating using Liger Kernel.
+
+    This module implements a block-sparse MLP with top-2 gating mechanism, providing
+    efficient computation by activating only the top 2 experts per token.
+
+    Args:
+        config: Model configuration object containing:
+            - hidden_size (int): Size of the input and output dimensions
+            - intermediate_size (int): Size of the intermediate (expanded) dimension
+            - hidden_act (str): Activation function type, must be "silu" or "swish"
+
+    Note:
+        This implementation is particularly effective for mixture-of-experts models
+        where sparse computation is desired.
+    """
+
     def __init__(self, config):
         super().__init__()
         self.ffn_dim = config.intermediate_size
@@ -41,9 +79,24 @@ class LigerBlockSparseTop2MLP(nn.Module):
 
 
 class LigerPhi3SwiGLUMLP(nn.Module):
-    """
-    Patch Phi3MLP to use LigerSiLUMulFunction
-    https://github.com/huggingface/transformers/blob/v4.41.0/src/transformers/models/phi3/modeling_phi3.py#L241
+    """Optimized Phi-3 SwiGLU MLP implementation using Liger Kernel.
+
+    This module provides a specialized implementation of the SwiGLU activation
+    for Phi-3 models, with optimized memory usage and computation patterns.
+    It patches the original Phi3MLP to use LigerSiLUMulFunction for better performance.
+
+    Reference:
+        https://github.com/huggingface/transformers/blob/v4.41.0/src/transformers/models/phi3/modeling_phi3.py#L241
+
+    Args:
+        config: Model configuration object containing:
+            - hidden_size (int): Size of the input and output dimensions
+            - intermediate_size (int): Size of the intermediate (expanded) dimension
+            - hidden_act (str): Activation function type, must be "silu" or "swish"
+
+    Note:
+        This implementation uses a single linear layer for both gate and up projections,
+        reducing memory bandwidth requirements.
     """
 
     def __init__(self, config):

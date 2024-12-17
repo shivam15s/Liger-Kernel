@@ -807,19 +807,27 @@ MODEL_TYPE_TO_APPLY_LIGER_FN = {
 
 
 def _apply_liger_kernel(model_type: str, **kwargs) -> None:
-    """
-    Applies Liger kernels based on the specified model type. The custom
-    kernels for the specified model type will be applied with the provided
-    keyword arguments, otherwise the default configuration will be used.
+    """Apply Liger Kernel optimizations to a specific model type.
 
-    ** Note: Calling _apply_liger_kernel() after model initialization
-    will not be able to fully patch models. This must be called before model initialization.
-    If the model has already been instantiated
+    This function is the central dispatcher for applying Liger Kernel optimizations
+    to different model architectures. It automatically selects and applies the
+    appropriate optimization function based on the model type.
 
     Args:
-        - model_type: the model types as defined in transformers/models/auto/modeling_auto.py
-          and specified in the model's config.json
-        - kwargs: keyword arguments that are passed to the corresponding apply_liger_kernel_to_* function.
+        model_type (str): The type of model to optimize (e.g., "llama", "mistral", "mixtral").
+        **kwargs: Optimization parameters that will be passed to the specific apply function.
+            Common parameters include:
+            - rope (bool): Whether to apply optimized rotary position embedding
+            - rms_norm (bool): Whether to apply optimized RMSNorm
+            - swiglu (bool): Whether to apply optimized SwiGLU activation
+            - fused_linear_cross_entropy (bool): Whether to use fused linear cross entropy loss
+
+    Raises:
+        KeyError: If the model type is not supported by Liger Kernel.
+
+    Note:
+        This function is primarily used internally by AutoLigerKernelForCausalLM
+        to automatically apply optimizations when loading pretrained models.
     """
     if not model_type:
         logger.info("Model type was not provided. No Liger kernels will be applied.")
@@ -851,11 +859,28 @@ def _apply_liger_kernel(model_type: str, **kwargs) -> None:
 
 def _apply_liger_kernel_to_instance(model: PreTrainedModel, **kwargs) -> None:
     """
-    Applies Liger kernels to the provided model instance.
+    Apply Liger Kernel optimizations to an already instantiated model instance.
+
+    This function applies optimizations to an existing model instance, which is useful
+    when you want to optimize a model that has already been loaded or modified.
 
     Args:
-        - model: the model instance to apply Liger kernels to
-        - kwargs: keyword arguments that are passed to the corresponding apply_liger_kernel_to_* function.
+        model_type (str): The type of model to optimize (e.g., "llama", "mistral", "mixtral").
+        model (PreTrainedModel): The instantiated model to optimize.
+        **kwargs: Optimization parameters that will be passed to the specific apply function.
+            Common parameters include:
+            - rope (bool): Whether to apply optimized rotary position embedding
+            - rms_norm (bool): Whether to apply optimized RMSNorm
+            - swiglu (bool): Whether to apply optimized SwiGLU activation
+            - fused_linear_cross_entropy (bool): Whether to use fused linear cross entropy loss
+
+    Raises:
+        KeyError: If the model type is not supported by Liger Kernel.
+        ValueError: If the model instance is not compatible with the specified model type.
+
+    Note:
+        This function is primarily used internally by AutoLigerKernelForCausalLM
+        when optimizing already instantiated models.
     """
     model_type = getattr(model, "config", None) and getattr(
         model.config, "model_type", None
@@ -888,3 +913,32 @@ def _apply_liger_kernel_to_instance(model: PreTrainedModel, **kwargs) -> None:
     )
 
     apply_fn(model=model, **applicable_kwargs)
+
+
+# Dictionary mapping model types to their respective Liger Kernel optimization functions
+MODEL_TYPE_TO_APPLY_LIGER_FN = {
+    "llama": apply_liger_kernel_to_llama,
+    "mistral": apply_liger_kernel_to_mistral,
+    "mixtral": apply_liger_kernel_to_mixtral,
+    "gemma": apply_liger_kernel_to_gemma,
+    "gemma2": apply_liger_kernel_to_gemma2,
+    "qwen2": apply_liger_kernel_to_qwen2,
+    "qwen2-vl": apply_liger_kernel_to_qwen2_vl,
+    "phi3": apply_liger_kernel_to_phi3,
+}
+"""Dictionary mapping model architectures to their optimization functions.
+
+This mapping is used by the AutoLigerKernelForCausalLM class to automatically
+apply the appropriate optimizations for each model architecture. Each function
+in this mapping implements specific optimizations tailored for that architecture.
+
+Supported model types:
+- llama: LLaMA models (v2 and v3)
+- mistral: Mistral models
+- mixtral: Mixtral models
+- gemma: Gemma models
+- gemma2: Gemma2 models
+- qwen2: Qwen2 models
+- qwen2-vl: Qwen2-VL multimodal models
+- phi3: Phi-3 models
+"""
