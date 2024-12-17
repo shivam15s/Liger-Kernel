@@ -40,28 +40,16 @@ SLEEP_SECONDS = 0.1
             torch.bfloat16,
             1e-1,
             1e-5,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
     ],
 )
-def test_correctness(
-    bsz, seq_len, num_q_heads, num_kv_heads, head_dim, dtype, atol, rtol
-):
+def test_correctness(bsz, seq_len, num_q_heads, num_kv_heads, head_dim, dtype, atol, rtol):
     rotary_emb = LlamaRotaryEmbedding(head_dim, device=device)
 
-    _tensor_q = (
-        torch.randn((bsz, seq_len, num_q_heads, head_dim), device=device)
-        .transpose(1, 2)
-        .to(dtype)
-    )
+    _tensor_q = torch.randn((bsz, seq_len, num_q_heads, head_dim), device=device).transpose(1, 2).to(dtype)
 
-    _tensor_k = (
-        torch.randn((bsz, seq_len, num_kv_heads, head_dim), device=device)
-        .transpose(1, 2)
-        .to(dtype)
-    )
+    _tensor_k = torch.randn((bsz, seq_len, num_kv_heads, head_dim), device=device).transpose(1, 2).to(dtype)
 
     q1 = _tensor_q.clone().requires_grad_(True)
     k1 = _tensor_k.clone().requires_grad_(True)
@@ -84,12 +72,8 @@ def test_correctness(
         torch.randn_like(hf_k, device=device).to(dtype),
     )
 
-    q1_grad, k1_grad = torch.autograd.grad(
-        (hf_q, hf_k), (q1, k1), (dq, dk), allow_unused=True
-    )
-    q2_grad, k2_grad = torch.autograd.grad(
-        (tt_q, tt_k), (q2, k2), (dq.clone(), dk.clone()), allow_unused=True
-    )
+    q1_grad, k1_grad = torch.autograd.grad((hf_q, hf_k), (q1, k1), (dq, dk), allow_unused=True)
+    q2_grad, k2_grad = torch.autograd.grad((tt_q, tt_k), (q2, k2), (dq.clone(), dk.clone()), allow_unused=True)
 
     assert torch.allclose(q1_grad, q2_grad, atol=atol, rtol=rtol)
     assert torch.allclose(k1_grad, k2_grad, atol=atol, rtol=rtol)
@@ -111,9 +95,7 @@ def test_correctness(
         (torch.bfloat16, 1e-1, 1e-5),
     ],
 )
-def test_functional_correctness(
-    bsz, seq_len, num_q_heads, num_kv_heads, head_dim, dtype, atol, rtol
-):
+def test_functional_correctness(bsz, seq_len, num_q_heads, num_kv_heads, head_dim, dtype, atol, rtol):
     _q = torch.randn((bsz, num_q_heads, seq_len, head_dim), device=device, dtype=dtype)
     _k = torch.randn((bsz, num_kv_heads, seq_len, head_dim), device=device, dtype=dtype)
 

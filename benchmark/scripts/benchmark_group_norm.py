@@ -27,12 +27,8 @@ def bench_speed_group_norm(input: SingleBenchmarkRunInput) -> SingleBenchmarkRun
     dtype = extra_benchmark_config["dtype"]
 
     x_shape = (M, C, H)
-    triton_ln = LigerGroupNorm(
-        num_channels=C, num_groups=C // channels_per_group, eps=eps
-    ).to(device)
-    torch_ln = torch.nn.GroupNorm(
-        num_groups=C // channels_per_group, num_channels=C, eps=eps
-    ).to(device)
+    triton_ln = LigerGroupNorm(num_channels=C, num_groups=C // channels_per_group, eps=eps).to(device)
+    torch_ln = torch.nn.GroupNorm(num_groups=C // channels_per_group, num_channels=C, eps=eps).to(device)
 
     x = torch.randn(x_shape, dtype=dtype, device=device)
     dy = torch.randn_like(x)
@@ -45,9 +41,7 @@ def bench_speed_group_norm(input: SingleBenchmarkRunInput) -> SingleBenchmarkRun
             return torch_ln(x)
 
     if mode == "forward":
-        ms_50, ms_20, ms_80 = triton.testing.do_bench(
-            y_fwd, quantiles=QUANTILES, grad_to_none=[x], rep=500
-        )
+        ms_50, ms_20, ms_80 = triton.testing.do_bench(y_fwd, quantiles=QUANTILES, grad_to_none=[x], rep=500)
     elif mode == "backward":
         y = y_fwd()
         ms_50, ms_20, ms_80 = triton.testing.do_bench(
@@ -62,9 +56,7 @@ def bench_speed_group_norm(input: SingleBenchmarkRunInput) -> SingleBenchmarkRun
             y = y_fwd()
             y.backward(dy, retain_graph=True)
 
-        ms_50, ms_20, ms_80 = triton.testing.do_bench(
-            full, quantiles=QUANTILES, grad_to_none=[x], rep=500
-        )
+        ms_50, ms_20, ms_80 = triton.testing.do_bench(full, quantiles=QUANTILES, grad_to_none=[x], rep=500)
 
     return SingleBenchmarkRunOutput(
         y_20=ms_20,
@@ -84,12 +76,8 @@ def bench_memory_group_norm(input: SingleBenchmarkRunInput) -> SingleBenchmarkRu
     dtype = extra_benchmark_config["dtype"]
 
     x_shape = (M, C, H)
-    triton_ln = LigerGroupNorm(
-        num_channels=C, num_groups=C // channels_per_group, eps=eps
-    ).to(device)
-    torch_ln = torch.nn.GroupNorm(
-        num_groups=C // channels_per_group, num_channels=C, eps=eps
-    ).to(device)
+    triton_ln = LigerGroupNorm(num_channels=C, num_groups=C // channels_per_group, eps=eps).to(device)
+    torch_ln = torch.nn.GroupNorm(num_groups=C // channels_per_group, num_channels=C, eps=eps).to(device)
 
     x = torch.randn(x_shape, dtype=dtype, device=device)
     dy = torch.randn_like(x)
@@ -139,12 +127,12 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full", "backward"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
     run_benchmarks(
         bench_test_fn=bench_memory_group_norm,
         kernel_operation_modes=["full", "forward", "backward"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

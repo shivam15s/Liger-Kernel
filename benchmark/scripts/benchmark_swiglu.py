@@ -1,7 +1,7 @@
 import torch
-import triton
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.models.llama.modeling_llama import LlamaMLP
+import triton
 from utils import (
     QUANTILES,
     SingleBenchmarkRunInput,
@@ -128,9 +128,7 @@ def bench_memory_swiglu(input: SingleBenchmarkRunInput) -> SingleBenchmarkRunOut
     elif mode == "backward":
         do = torch.randn_like(x)
         y = fwd()
-        mem_50, mem_20, mem_80 = _test_memory(
-            lambda: y.backward(do, retain_graph=True), quantiles=QUANTILES
-        )
+        mem_50, mem_20, mem_80 = _test_memory(lambda: y.backward(do, retain_graph=True), quantiles=QUANTILES)
     else:
         mem_50, mem_20, mem_80 = _test_memory(full, quantiles=QUANTILES)
 

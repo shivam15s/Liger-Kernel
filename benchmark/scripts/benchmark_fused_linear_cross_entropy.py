@@ -28,12 +28,8 @@ class TorchLMHeadCE(torch.nn.Module):
 
     def __init__(self, H: int, V: int, dtype: torch.dtype, ignore_index: int = -100):
         super().__init__()
-        self.lin = torch.nn.Linear(
-            in_features=H, out_features=V, bias=False, dtype=dtype
-        )
-        self.ce_loss = torch.nn.CrossEntropyLoss(
-            ignore_index=ignore_index, reduction="mean"
-        )
+        self.lin = torch.nn.Linear(in_features=H, out_features=V, bias=False, dtype=dtype)
+        self.ce_loss = torch.nn.CrossEntropyLoss(ignore_index=ignore_index, reduction="mean")
 
     def forward(self, x, y):
         logits = self.lin(x)
@@ -43,12 +39,8 @@ class TorchLMHeadCE(torch.nn.Module):
 class LigerLMHeadCE(torch.nn.Module):
     def __init__(self, H: int, V: int, dtype: torch.dtype, ignore_index: int = -100):
         super().__init__()
-        self.lin = torch.nn.Linear(
-            in_features=H, out_features=V, bias=False, dtype=dtype
-        )
-        self.ce_loss = LigerFusedLinearCrossEntropyLoss(
-            ignore_index=ignore_index, reduction="mean"
-        )
+        self.lin = torch.nn.Linear(in_features=H, out_features=V, bias=False, dtype=dtype)
+        self.ce_loss = LigerFusedLinearCrossEntropyLoss(ignore_index=ignore_index, reduction="mean")
 
     def forward(self, x, y):
         return self.ce_loss(self.lin.weight, x, y)
@@ -161,9 +153,7 @@ if __name__ == "__main__":
         "x_label": "B x T",
         "x_values": [2**i for i in range(12, 16)],
         "kernel_providers": ["liger", "huggingface"],
-        "extra_benchmark_configs": [
-            {"H": 4096, "V": 128256, "mode": "forward", "dtype": torch.bfloat16}
-        ],
+        "extra_benchmark_configs": [{"H": 4096, "V": 128256, "mode": "forward", "dtype": torch.bfloat16}],
         "overwrite": args.overwrite,
     }
 
@@ -172,12 +162,12 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
     run_benchmarks(
         bench_test_fn=bench_memory_fused_linear_cross_entropy,
         kernel_operation_modes=["full"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

@@ -1,7 +1,7 @@
 import torch
-import triton
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.models.llama.modeling_llama import LlamaMLP
+import triton
 from utils import (
     QUANTILES,
     SingleBenchmarkRunInput,

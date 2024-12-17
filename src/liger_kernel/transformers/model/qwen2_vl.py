@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple, Union
 
-import torch
 from packaging import version
+import torch
 from torch.nn import CrossEntropyLoss
 from transformers import __version__ as transformers_version
 from transformers.models.qwen2_vl.modeling_qwen2_vl import (
@@ -20,9 +20,7 @@ from liger_kernel.transformers.fused_linear_cross_entropy import (
 
 
 @add_start_docstrings_to_model_forward(QWEN2_VL_INPUTS_DOCSTRING)
-@replace_return_docstrings(
-    output_type=Qwen2VLCausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC
-)
+@replace_return_docstrings(output_type=Qwen2VLCausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC)
 def lce_forward(
     self,
     input_ids: torch.LongTensor = None,
@@ -82,19 +80,11 @@ def lce_forward(
     >>> tokenizer.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     "The image shows a street scene with a red stop sign in the foreground. In the background, there is a large red gate with Chinese characters ..."
     ```"""
-    output_attentions = (
-        output_attentions
-        if output_attentions is not None
-        else self.config.output_attentions
-    )
+    output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
     output_hidden_states = (
-        output_hidden_states
-        if output_hidden_states is not None
-        else self.config.output_hidden_states
+        output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
     )
-    return_dict = (
-        return_dict if return_dict is not None else self.config.use_return_dict
-    )
+    return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
     if inputs_embeds is None:
         inputs_embeds = self.model.embed_tokens(input_ids)
@@ -144,9 +134,7 @@ def lce_forward(
         # transformers and leads to failed tests or users noticing differences in results.
         # TODO: remove above conditional when liger drops support for transformers<4.47.0
         if position_ids is None and input_ids is not None:
-            position_ids, _ = self.get_rope_index(
-                input_ids, image_grid_thw, video_grid_thw, attention_mask
-            )
+            position_ids, _ = self.get_rope_index(input_ids, image_grid_thw, video_grid_thw, attention_mask)
 
     outputs = self.model(
         input_ids=None,

@@ -159,9 +159,7 @@ def liger_qwen2vl_mrope(q, k, cos, sin, mrope_section, unsqueeze_dim=1):
     return LigerQwen2VLMRopeFunction.apply(q, k, cos, sin, mrope_section, unsqueeze_dim)
 
 
-def liger_rms_norm(
-    X, W, eps, offset: float = 0.0, casting_mode: str = "llama", in_place: bool = True
-):
+def liger_rms_norm(X, W, eps, offset: float = 0.0, casting_mode: str = "llama", in_place: bool = True):
     return LigerRMSNormFunction.apply(X, W, eps, offset, casting_mode, in_place)
 
 

@@ -177,9 +177,7 @@ def _rms_norm_backward_kernel(
 
         dX_row = rstd_row * m
 
-        dX_row += (rstd_row) * (
-            -(1 / n_cols) * rstd_row * rstd_row * tl.sum(m * X_row, axis=0) * X_row
-        )
+        dX_row += (rstd_row) * (-(1 / n_cols) * rstd_row * rstd_row * tl.sum(m * X_row, axis=0) * X_row)
 
         # calculate the gradient of W
         if casting_mode == _CASTING_MODE_LLAMA:
@@ -207,14 +205,10 @@ _str_to_casting_mode = {
 
 def rms_norm_forward(X, W, eps, offset, casting_mode):
     if not isinstance(casting_mode, int):
-        assert (
-            casting_mode in _str_to_casting_mode
-        ), f"Invalid casting mode: {casting_mode}"
+        assert casting_mode in _str_to_casting_mode, f"Invalid casting mode: {casting_mode}"
         casting_mode = _str_to_casting_mode[casting_mode]
     else:
-        assert (
-            casting_mode in _str_to_casting_mode.values()
-        ), f"Invalid casting mode: {casting_mode}"
+        assert casting_mode in _str_to_casting_mode.values(), f"Invalid casting mode: {casting_mode}"
 
     shape = X.shape
     dim = shape[-1]
@@ -225,17 +219,11 @@ def rms_norm_forward(X, W, eps, offset, casting_mode):
     Y = torch.empty((n_rows, n_cols), dtype=X.dtype, device=X.device)
     # RSTD is to cache rstd for each row
     # RSTD is always computed/stored in fp32 if we are using Llama or Gemma casting mode
-    rstd_dtype = (
-        torch.float32
-        if casting_mode in (_CASTING_MODE_LLAMA.value, _CASTING_MODE_GEMMA.value)
-        else X.dtype
-    )
+    rstd_dtype = torch.float32 if casting_mode in (_CASTING_MODE_LLAMA.value, _CASTING_MODE_GEMMA.value) else X.dtype
     RSTD = torch.empty(n_rows, dtype=rstd_dtype, device=X.device)
 
     # Check constraints.
-    assert (
-        X.shape[1] == W.shape[0]
-    ), "Incompatible hidden size dimension between tensor1.shape[1] and tensor2.shape[0]"
+    assert X.shape[1] == W.shape[0], "Incompatible hidden size dimension between tensor1.shape[1] and tensor2.shape[0]"
 
     _rms_norm_forward_kernel[(n_rows,)](
         Y,
@@ -256,9 +244,7 @@ def rms_norm_forward(X, W, eps, offset, casting_mode):
     return Y.view(*shape), X, RSTD, BLOCK_SIZE, num_warps, casting_mode
 
 
-def rms_norm_backward(
-    dY, X, W, RSTD, offset, casting_mode, BLOCK_SIZE, num_warps, in_place
-):
+def rms_norm_backward(dY, X, W, RSTD, offset, casting_mode, BLOCK_SIZE, num_warps, in_place):
     shape = dY.shape
     dim = shape[-1]
     dY = dY.view(-1, dim)
@@ -340,9 +326,7 @@ class LigerRMSNormFunction(torch.autograd.Function):
         X: (B, T, H) or (BxT, H)
         W: (H,)
         """
-        Y, X, RSTD, BLOCK_SIZE, num_warps, casting_mode = rms_norm_forward(
-            X, W, eps, offset, casting_mode
-        )
+        Y, X, RSTD, BLOCK_SIZE, num_warps, casting_mode = rms_norm_forward(X, W, eps, offset, casting_mode)
         ctx.offset = offset
         ctx.casting_mode = casting_mode
         ctx.in_place = in_place

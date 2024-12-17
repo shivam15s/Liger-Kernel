@@ -39,9 +39,7 @@ def bench_speed_layer_norm(input: SingleBenchmarkRunInput) -> SingleBenchmarkRun
             return torch_ln(x)
 
     if mode == "forward":
-        ms_50, ms_20, ms_80 = triton.testing.do_bench(
-            y_fwd, quantiles=QUANTILES, grad_to_none=[x], rep=500
-        )
+        ms_50, ms_20, ms_80 = triton.testing.do_bench(y_fwd, quantiles=QUANTILES, grad_to_none=[x], rep=500)
     elif mode == "backward":
         y = y_fwd()
         ms_50, ms_20, ms_80 = triton.testing.do_bench(
@@ -56,9 +54,7 @@ def bench_speed_layer_norm(input: SingleBenchmarkRunInput) -> SingleBenchmarkRun
             y = y_fwd()
             y.backward(dy, retain_graph=True)
 
-        ms_50, ms_20, ms_80 = triton.testing.do_bench(
-            full, quantiles=QUANTILES, grad_to_none=[x], rep=500
-        )
+        ms_50, ms_20, ms_80 = triton.testing.do_bench(full, quantiles=QUANTILES, grad_to_none=[x], rep=500)
 
     return SingleBenchmarkRunOutput(
         y_20=ms_20,
@@ -119,12 +115,12 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
     run_benchmarks(
         bench_test_fn=bench_memory_layer_norm,
         kernel_operation_modes=["full"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

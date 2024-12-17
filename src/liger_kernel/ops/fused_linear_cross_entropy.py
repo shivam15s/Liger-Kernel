@@ -40,14 +40,10 @@ def fused_linear_cross_entropy_forward(
     BLOCK_SIZE = min(MAX_FUSED_SIZE, triton.next_power_of_2(V))
 
     inc_factor = triton.cdiv(V, H)  # (V + H - 1) // H
-    chunk_size = triton.next_power_of_2(
-        triton.cdiv(BT, inc_factor)
-    )  # (BT + inc_factor - 1) // inc_factor
+    chunk_size = triton.next_power_of_2(triton.cdiv(BT, inc_factor))  # (BT + inc_factor - 1) // inc_factor
     num_chunks = triton.cdiv(BT, chunk_size)  # (BT + chunk_size - 1) // chunk_size
 
-    grad_weight = (
-        torch.zeros_like(weight, device=device) if weight.requires_grad else None
-    )
+    grad_weight = torch.zeros_like(weight, device=device) if weight.requires_grad else None
     grad_input = torch.zeros_like(_input, device=device)
     grad_bias = torch.zeros_like(bias, device=device) if bias is not None else None
     # we use fp32 for loss accumulator
@@ -137,9 +133,7 @@ def fused_linear_cross_entropy_forward(
     return loss, grad_input, grad_weight, grad_bias
 
 
-def fused_linear_cross_entropy_backward(
-    grad_output, grad_input, grad_weight, grad_bias
-):
+def fused_linear_cross_entropy_backward(grad_output, grad_input, grad_weight, grad_bias):
     # If cross entropy is the last layer, grad_output is 1.0. Skip the mul to save time
     if torch.ne(grad_output, torch.tensor(1.0, device=grad_output.device)):
         # We use a Triton kernel instead of a PyTorch operation because modifying inputs in-place

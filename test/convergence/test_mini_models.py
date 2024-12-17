@@ -16,9 +16,9 @@ from test.utils import (
     supports_bfloat16,
 )
 
+from datasets import load_from_disk
 import pytest
 import torch
-from datasets import load_from_disk
 from torch.utils.data import DataLoader
 from transformers.models.gemma import GemmaConfig, GemmaForCausalLM
 from transformers.models.gemma2 import Gemma2Config, Gemma2ForCausalLM
@@ -434,9 +434,7 @@ def run_mini_model(
     model = create_model(model_name).to(dtype).to(device)
 
     train_dataset = load_from_disk(DEFAULT_DATASET_PATH)
-    loader = DataLoader(
-        train_dataset, batch_size=16, shuffle=False, collate_fn=simple_collate_fn
-    )
+    loader = DataLoader(train_dataset, batch_size=16, shuffle=False, collate_fn=simple_collate_fn)
     loader_iter = iter(loader)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
 
@@ -470,9 +468,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
         pytest.param(
             "mini_mllama",
@@ -502,9 +498,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             marks=[
-                pytest.mark.skipif(
-                    not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-                ),
+                pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
                 pytest.mark.skipif(
                     not MLLAMA_AVAILABLE,
                     reason="Mllama not available in this version of transformers",
@@ -523,9 +517,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
         pytest.param(  # qwen2_vl requires slightly larger tolerances to pass this test after bug fix to qwen2_vl in transformers v4.47.0
             "mini_qwen2_vl",
@@ -555,9 +547,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             marks=[
-                pytest.mark.skipif(
-                    not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-                ),
+                pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
                 pytest.mark.skipif(
                     not QWEN2_VL_AVAILABLE,
                     reason="Qwen2-VL not available in this version of transformers",
@@ -576,9 +566,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
         ("mini_mistral", 32, 1e-4, torch.float32, 1e-8, 1e-5, 5e-3, 1e-5, 5e-3, 1e-5),
         pytest.param(
@@ -592,9 +580,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
         # TODO: mixtral is flaky so disable the test for now
         # ("mini_mixtral", 32, 1e-4, torch.float32, 5e-4, 1e-4, 5e-3, 1e-5, 1e-2, 1e-5),
@@ -626,9 +612,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
         ("mini_gemma1.1", 32, 1e-4, torch.float32, 1e-8, 1e-4, 5e-3, 1e-5, 5e-3, 1e-5),
         pytest.param(
@@ -642,9 +626,7 @@ def run_mini_model(
             1e-2,
             1e-2,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
         ("mini_gemma2", 32, 1e-4, torch.float32, 1e-8, 1e-4, 5e-3, 1e-5, 5e-3, 1e-5),
         # TODO: Gemma2 test for bf16 is not passing within the tolerance range, might be casting issue, need to investigate
@@ -679,13 +661,9 @@ def test_mini_model(
 ):
     # Non-liger models should be initialized and tested first to avoid the module being overridden
 
-    expected_output = run_mini_model(
-        model_name=model_name, num_steps=num_steps, dtype=dtype, lr=lr
-    )
+    expected_output = run_mini_model(model_name=model_name, num_steps=num_steps, dtype=dtype, lr=lr)
 
-    actual_output = run_mini_model(
-        model_name=model_name, num_steps=num_steps, dtype=dtype, lr=lr, with_liger=True
-    )
+    actual_output = run_mini_model(model_name=model_name, num_steps=num_steps, dtype=dtype, lr=lr, with_liger=True)
 
     # Compare every step of the loss
     assert_verbose_allclose(
@@ -710,7 +688,6 @@ def test_mini_model(
     for expected_param, actual_param in zip(
         expected_output["model"].named_parameters(),
         actual_output["model"].named_parameters(),
+        strict=False,
     ):
-        assert_verbose_allclose(
-            expected_param[1], actual_param[1], atol=param_atol, rtol=param_rtol
-        )
+        assert_verbose_allclose(expected_param[1], actual_param[1], atol=param_atol, rtol=param_rtol)

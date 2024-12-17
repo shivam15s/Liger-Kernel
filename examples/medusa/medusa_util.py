@@ -80,12 +80,7 @@ def calculate_loss_contribution(
     if i == 0:
         return loss_i if not medusa_only_heads else 0
     else:
-        return (
-            loss_i
-            * medusa_decay_coefficient**i
-            * medusa_heads_coefficient
-            * medusa_scheduler_coefficient
-        )
+        return loss_i * medusa_decay_coefficient**i * medusa_heads_coefficient * medusa_scheduler_coefficient
 
 
 def add_medusa_heads(
@@ -214,17 +209,11 @@ def add_medusa_heads(
                 lce = LigerFusedLinearCrossEntropyLoss()
                 for i in range(model.medusa_num_heads + 1):
                     shift_hidden_states = (
-                        hidden_states[..., : -(1 + i), :]
-                        .contiguous()
-                        .view(-1, model.config.hidden_size)
+                        hidden_states[..., : -(1 + i), :].contiguous().view(-1, model.config.hidden_size)
                     )
                     shift_labels = labels[..., (1 + i) :].contiguous().view(-1)
 
-                    weight = (
-                        model.lm_head.weight
-                        if i == 0
-                        else model.medusa_head[i - 1][-1].weight
-                    )
+                    weight = model.lm_head.weight if i == 0 else model.medusa_head[i - 1][-1].weight
                     loss_i = lce(weight, shift_hidden_states, shift_labels)
 
                     loss += calculate_loss_contribution(
@@ -236,21 +225,11 @@ def add_medusa_heads(
                         medusa_scheduler_coefficient,
                     )
             else:
-
                 loss_fct = CrossEntropyLoss()
                 for i in range(model.medusa_num_heads + 1):
-                    medusa_logits_i = (
-                        medusa_logits[i, :, : -(1 + i)]
-                        .contiguous()
-                        .view(-1, medusa_logits.shape[-1])
-                    )
+                    medusa_logits_i = medusa_logits[i, :, : -(1 + i)].contiguous().view(-1, medusa_logits.shape[-1])
                     medusa_logits_i = medusa_logits_i.float()
-                    medusa_labels = (
-                        labels[..., (1 + i) :]
-                        .contiguous()
-                        .view(-1)
-                        .to(medusa_logits_i.device)
-                    )
+                    medusa_labels = labels[..., (1 + i) :].contiguous().view(-1).to(medusa_logits_i.device)
 
                     loss_i = loss_fct(medusa_logits_i, medusa_labels)
 
@@ -270,9 +249,7 @@ def add_medusa_heads(
                 for i in range(model.medusa_num_heads):
                     medusa_logits.append(model.medusa_head[i](hidden_states))
 
-        return_dict = (
-            return_dict if return_dict is not None else model.config.use_return_dict
-        )
+        return_dict = return_dict if return_dict is not None else model.config.use_return_dict
 
         if not return_dict:
             output = (medusa_logits,) + outputs[1:]

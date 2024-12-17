@@ -1,6 +1,6 @@
 import torch
-import triton
 from torch.nn import CrossEntropyLoss
+import triton
 from utils import (
     QUANTILES,
     SingleBenchmarkRunInput,
@@ -86,9 +86,7 @@ def bench_speed_cross_entropy(
             y = fwd()
             y.backward()
 
-        ms_50, ms_20, ms_80 = triton.testing.do_bench(
-            full, rep=100, quantiles=QUANTILES
-        )
+        ms_50, ms_20, ms_80 = triton.testing.do_bench(full, rep=100, quantiles=QUANTILES)
 
     return SingleBenchmarkRunOutput(
         y_20=ms_20,
@@ -115,12 +113,12 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
     run_benchmarks(
         bench_test_fn=bench_memory_cross_entropy,
         kernel_operation_modes=["full"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

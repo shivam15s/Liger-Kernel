@@ -28,9 +28,7 @@ class TorchDPOLoss(torch.nn.Module):
         bias: bool = False,
     ):
         super().__init__()
-        self.lin = torch.nn.Linear(
-            in_features=H, out_features=V, bias=bias, dtype=dtype
-        )
+        self.lin = torch.nn.Linear(in_features=H, out_features=V, bias=bias, dtype=dtype)
         self.dpo_loss = HF_DPO_Loss(beta=beta, ignore_index=ignore_index)
 
     def forward(self, x, target):
@@ -53,9 +51,7 @@ class LigerDPOLoss(torch.nn.Module):
         bias: bool = False,
     ):
         super().__init__()
-        self.lin = torch.nn.Linear(
-            in_features=H, out_features=V, bias=bias, dtype=dtype
-        )
+        self.lin = torch.nn.Linear(in_features=H, out_features=V, bias=bias, dtype=dtype)
         self.beta = beta
         self.ignore_index = ignore_index
 
@@ -82,12 +78,8 @@ def bench_memory_dpo_loss(input: SingleBenchmarkRunInput) -> SingleBenchmarkRunO
     ignore_index = input.extra_benchmark_config["ignore_index"]
     provider = input.kernel_provider
 
-    torch_dpo_loss = TorchDPOLoss(
-        H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias
-    ).to(device)
-    liger_dpo_loss = LigerDPOLoss(
-        H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias
-    ).to(device)
+    torch_dpo_loss = TorchDPOLoss(H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias).to(device)
+    liger_dpo_loss = LigerDPOLoss(H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias).to(device)
 
     # Input shape: [B, T, H]
     _input = torch.randn(B, T, H, device=device, dtype=dtype)
@@ -129,12 +121,8 @@ def bench_speed_dpo_loss(input: SingleBenchmarkRunInput) -> SingleBenchmarkRunOu
     provider = input.kernel_provider
     mode = input.kernel_operation_mode
 
-    torch_dpo_loss = TorchDPOLoss(
-        H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias
-    ).to(device)
-    liger_dpo_loss = LigerDPOLoss(
-        H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias
-    ).to(device)
+    torch_dpo_loss = TorchDPOLoss(H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias).to(device)
+    liger_dpo_loss = LigerDPOLoss(H=H, V=V, dtype=dtype, beta=beta, ignore_index=ignore_index, bias=bias).to(device)
 
     # Input shape: [B, T, H]
     _input = torch.randn(B, T, H, device=device, dtype=dtype)
@@ -215,7 +203,7 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
 
     run_benchmarks(
@@ -223,5 +211,5 @@ if __name__ == "__main__":
         kernel_operation_modes=["full"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

@@ -19,9 +19,7 @@ from liger_kernel.transformers.fused_linear_cross_entropy import (
 
 
 @add_start_docstrings_to_model_forward(MISTRAL_INPUTS_DOCSTRING)
-@replace_return_docstrings(
-    output_type=CausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC
-)
+@replace_return_docstrings(output_type=CausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC)
 def lce_forward(
     self,
     input_ids: torch.LongTensor = None,
@@ -65,19 +63,11 @@ def lce_forward(
     "Hey, are you conscious? Can you talk to me?\nI'm not conscious, but I can talk to you."
     ```"""
 
-    output_attentions = (
-        output_attentions
-        if output_attentions is not None
-        else self.config.output_attentions
-    )
+    output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
     output_hidden_states = (
-        output_hidden_states
-        if output_hidden_states is not None
-        else self.config.output_hidden_states
+        output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
     )
-    return_dict = (
-        return_dict if return_dict is not None else self.config.use_return_dict
-    )
+    return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
     # decoder outputs consists of (dec_features, layer_state, dec_hidden, dec_attn)
     outputs = self.model(

@@ -33,9 +33,7 @@ class TorchLMHeadORPO(torch.nn.Module):
         from test.chunked_loss.test_orpo_loss import HF_ORPO_Loss
 
         super().__init__()
-        self.lin = torch.nn.Linear(
-            in_features=H, out_features=V, bias=False, dtype=dtype
-        )
+        self.lin = torch.nn.Linear(in_features=H, out_features=V, bias=False, dtype=dtype)
         self.orpo_loss = HF_ORPO_Loss().get_batch_loss_metrics
 
     def forward(self, x, y):
@@ -45,9 +43,7 @@ class TorchLMHeadORPO(torch.nn.Module):
 class LigerLMHeadORPO(torch.nn.Module):
     def __init__(self, H: int, V: int, dtype: torch.dtype, ignore_index: int = -100):
         super().__init__()
-        self.lin = torch.nn.Linear(
-            in_features=H, out_features=V, bias=False, dtype=dtype
-        )
+        self.lin = torch.nn.Linear(in_features=H, out_features=V, bias=False, dtype=dtype)
         self.orpo_loss = LigerFusedLinearORPOFunction.apply
 
     def forward(self, x, y):
@@ -180,12 +176,12 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
     run_benchmarks(
         bench_test_fn=bench_memory_fused_linear_orpo_loss,
         kernel_operation_modes=["full"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

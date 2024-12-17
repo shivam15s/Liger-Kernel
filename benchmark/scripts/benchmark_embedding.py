@@ -1,6 +1,6 @@
 import torch
-import triton
 from torch.nn import Embedding
+import triton
 from utils import (
     QUANTILES,
     SingleBenchmarkRunInput,
@@ -50,9 +50,7 @@ def bench_speed_embedding(input: SingleBenchmarkRunInput) -> SingleBenchmarkRunO
     if mode == "forward":
         ms_50, ms_20, ms_80 = triton.testing.do_bench(fwd, quantiles=QUANTILES, rep=100)
     elif mode == "full":
-        ms_50, ms_20, ms_80 = triton.testing.do_bench(
-            full, quantiles=QUANTILES, rep=100
-        )
+        ms_50, ms_20, ms_80 = triton.testing.do_bench(full, quantiles=QUANTILES, rep=100)
     return SingleBenchmarkRunOutput(
         y_20=ms_20,
         y_50=ms_50,
@@ -118,12 +116,12 @@ if __name__ == "__main__":
         kernel_operation_modes=["forward", "full"],
         metric_name="speed",
         metric_unit="ms",
-        **common_configs
+        **common_configs,
     )
     run_benchmarks(
         bench_test_fn=bench_memory_embedding,
         kernel_operation_modes=["full"],
         metric_name="memory",
         metric_unit="MB",
-        **common_configs
+        **common_configs,
     )

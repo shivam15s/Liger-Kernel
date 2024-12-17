@@ -38,9 +38,7 @@ SLEEP_SECONDS = 0.1
             torch.bfloat16,
             1e4,
             6e-3,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
     ],
 )

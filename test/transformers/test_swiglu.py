@@ -46,15 +46,11 @@ SLEEP_SECONDS = 0.1
             torch.bfloat16,
             1e4,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
     ],
 )
-def test_correctness_llamamlp(
-    bsz, seq_len, hidden_size, intermediate_size, dtype, atol, rtol
-):
+def test_correctness_llamamlp(bsz, seq_len, hidden_size, intermediate_size, dtype, atol, rtol):
     _input = torch.randn(bsz, seq_len, hidden_size, device=device, dtype=dtype)
 
     x1 = _input.clone().requires_grad_(True)
@@ -126,15 +122,11 @@ def test_correctness_llamamlp(
             torch.bfloat16,
             1e4,
             1e-2,
-            marks=pytest.mark.skipif(
-                not supports_bfloat16(), reason="bfloat16 not supported on this GPU"
-            ),
+            marks=pytest.mark.skipif(not supports_bfloat16(), reason="bfloat16 not supported on this GPU"),
         ),
     ],
 )
-def test_correctness_phi3mlp(
-    bsz, seq_len, hidden_size, intermediate_size, dtype, atol, rtol
-):
+def test_correctness_phi3mlp(bsz, seq_len, hidden_size, intermediate_size, dtype, atol, rtol):
     _input = torch.randn(bsz, seq_len, hidden_size, device=device, dtype=dtype)
 
     x1 = _input.clone().requires_grad_(True)

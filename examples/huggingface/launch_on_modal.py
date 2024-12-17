@@ -32,11 +32,7 @@ SIXTEEN_GB = 16 * 1024
 
 app = modal.App("liger-example")
 
-image = (
-    modal.Image.debian_slim()
-    .pip_install_from_requirements("requirements.txt")
-    .copy_local_dir(".", "/root")
-)
+image = modal.Image.debian_slim().pip_install_from_requirements("requirements.txt").copy_local_dir(".", "/root")
 
 if "HF_TOKEN" not in os.environ:
     print("HF_TOKEN not found in environment variables, using an empty token.")

@@ -34,12 +34,6 @@ class AutoLigerKernelForCausalLM(AutoModelForCausalLM):
         apply_fn = MODEL_TYPE_TO_APPLY_LIGER_FN[model_type]
         apply_fn_signature = inspect.signature(apply_fn)
 
-        applicable_kwargs = {
-            key: value
-            for key, value in kwargs.items()
-            if key not in apply_fn_signature.parameters
-        }
+        applicable_kwargs = {key: value for key, value in kwargs.items() if key not in apply_fn_signature.parameters}
 
-        return super().from_pretrained(
-            pretrained_model_name_or_path, *model_args, **applicable_kwargs
-        )
+        return super().from_pretrained(pretrained_model_name_or_path, *model_args, **applicable_kwargs)

@@ -33,20 +33,15 @@ def test_auto_liger_kernel_for_causal_lm_from_pretrained():
     mock_model_config.model_type = "llama"
     mock_llama = mock.Mock()
 
-    with patch.dict(
-        MODEL_TYPE_TO_APPLY_LIGER_FN, {"llama": mock_llama}
-    ), mock.patch.object(
+    with patch.dict(MODEL_TYPE_TO_APPLY_LIGER_FN, {"llama": mock_llama}), mock.patch.object(
         AutoConfig, "from_pretrained", return_value=mock_model_config
     ), mock.patch.object(
         AutoModelForCausalLM, "from_pretrained", return_value="mock_model"
     ) as mock_super_from_pretrained:
-
         # Mock the function signature of apply_liger_kernel_to_llama
         mock_llama.__signature__ = signature(apply_liger_kernel_to_llama)
 
-        model = AutoLigerKernelForCausalLM.from_pretrained(
-            pretrained_model_name_or_path, *model_args, **kwargs
-        )
+        model = AutoLigerKernelForCausalLM.from_pretrained(pretrained_model_name_or_path, *model_args, **kwargs)
 
         # Check that the apply_liger_kernel_to_llama mock was called with the correct kwargs
         mock_llama.assert_called_once_with(rope=False, swiglu=True)
