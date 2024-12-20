@@ -1,4 +1,11 @@
-from test.utils import assert_verbose_allclose, set_seed, supports_bfloat16
+from test.transformers.test_utils import (
+    generate_random_labels,
+    generate_random_tensor,
+    run_loss_test,
+    run_softcap_loss_test,
+    run_z_loss_test,
+)
+from test.utils import set_seed, supports_bfloat16
 
 import pytest
 import torch
@@ -11,7 +18,6 @@ from liger_kernel.ops.cross_entropy import (
 )
 from liger_kernel.ops.utils import is_hip
 from liger_kernel.transformers.cross_entropy import LigerCrossEntropyLoss
-from liger_kernel.transformers.functional import liger_cross_entropy
 from liger_kernel.utils import infer_device
 
 device = infer_device()
@@ -74,178 +80,217 @@ class CrossEntropyWithZLoss(torch.nn.Module):
 
 
 def _test_correctness_once(target_ce, B, T, V, reduction, scalar, dtype, atol, rtol):
+    """Test basic cross entropy functionality."""
     torch.manual_seed(0)
     torch_ce = CrossEntropyLoss(reduction=reduction)
 
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
 
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        device=device,
+    )
 
-    output = torch_ce(_input, target)
-    output2 = target_ce(_input2, target)
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
-
-    output.backward(gradient=torch.ones_like(output))
-    output2.backward(gradient=torch.ones_like(output))
-    assert torch.allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
+    # Compare outputs and gradients
+    run_loss_test(
+        target_ce,
+        input_tensor,
+        target,
+        torch_ce(input_tensor, target),
+        atol=atol,
+        rtol=rtol,
+    )
 
 
 def _test_correctness_with_ignore_index_once(
     target_ce, B, T, V, ignore_index, reduction, scalar, dtype, atol, rtol
 ):
-
+    """Test cross entropy with ignore_index parameter."""
     torch_ce = CrossEntropyLoss(ignore_index=ignore_index, reduction=reduction)
 
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
 
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        ignore_index=ignore_index,
+        device=device,
+    )
 
-    # Assign some random number of elements as ignore_index
-    num_elements_to_assign = torch.randint(
-        1, B * T // 2, (1,)
-    ).item()  # Random number of elements to set to ignore_index
-    indices_to_assign = torch.randperm(B * T)[
-        :num_elements_to_assign
-    ]  # Randomly select indices
-    target[indices_to_assign] = ignore_index
-
-    output = torch_ce(_input, target)
-    output2 = target_ce(_input2, target)
-
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
-
-    output.backward(gradient=torch.ones_like(output))
-    output2.backward(gradient=torch.ones_like(output))
-    assert torch.allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
+    # Compare outputs and gradients
+    run_loss_test(
+        target_ce,
+        input_tensor,
+        target,
+        torch_ce(input_tensor, target),
+        atol=atol,
+        rtol=rtol,
+    )
 
 
 def _test_correctness_with_label_smoothing_once(
     target_ce, B, T, V, label_smoothing, scalar, dtype, atol, rtol
 ):
-
+    """Test cross entropy with label smoothing."""
     torch_ce = CrossEntropyLoss(label_smoothing=label_smoothing)
 
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
 
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        device=device,
+    )
 
-    output = torch_ce(_input, target)
-    output2 = target_ce(_input2, target)
-
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
-
-    output.backward()
-    output2.backward()
-    assert torch.allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
+    # Compare outputs and gradients
+    run_loss_test(
+        target_ce,
+        input_tensor,
+        target,
+        torch_ce(input_tensor, target),
+        atol=atol,
+        rtol=rtol,
+    )
 
 
 def _test_correctness_with_label_smoothing_with_ignore_index_once(
     target_ce, B, T, V, ignore_index, label_smoothing, scalar, dtype, atol, rtol
 ):
-
+    """Test cross entropy with both label smoothing and ignore_index."""
     torch_ce = CrossEntropyLoss(
-        ignore_index=ignore_index, label_smoothing=label_smoothing
+        ignore_index=ignore_index,
+        label_smoothing=label_smoothing,
     )
 
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
 
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        ignore_index=ignore_index,
+        device=device,
+    )
 
-    # Assign some random number of elements as ignore_index
-    num_elements_to_assign = torch.randint(
-        1, B * T // 2, (1,)
-    ).item()  # Random number of elements to set to ignore_index
-    indices_to_assign = torch.randperm(B * T)[
-        :num_elements_to_assign
-    ]  # Randomly select indices
-    target[indices_to_assign] = ignore_index
-
-    output = torch_ce(_input, target)
-    output2 = target_ce(_input2, target)
-
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
-
-    output.backward()
-    output2.backward()
-    assert torch.allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
+    # Compare outputs and gradients
+    run_loss_test(
+        target_ce,
+        input_tensor,
+        target,
+        torch_ce(input_tensor, target),
+        atol=atol,
+        rtol=rtol,
+    )
 
 
 def _test_correctness_with_softcap_once(
     target_ce, B, T, V, softcap, reduction, scalar, dtype, atol, rtol
 ):
+    """Test cross entropy with softcap transformation."""
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
 
-    torch_ce = CrossEntropyLoss(reduction=reduction)
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        device=device,
+    )
 
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
-
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
-
-    # upcasting to match liger's casting strategy
-    # and downcasting to original dtype
-    output = torch_ce(
-        softcap * torch.tanh(_input.to(torch.float32) / softcap), target
-    ).to(dtype)
-    output2 = target_ce(_input2, target)
-
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
-
-    output.backward(gradient=torch.ones_like(output))
-    output2.backward(gradient=torch.ones_like(output))
-
-    assert torch.allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
+    run_softcap_loss_test(
+        target_ce,
+        input_tensor,
+        target,
+        softcap=softcap,
+        reduction=reduction,
+        dtype=dtype,
+        atol=atol,
+        rtol=rtol,
+    )
 
 
 def _test_correctness_with_z_loss_once(
-    target_ce,
-    B,
-    T,
-    V,
-    scalar,
-    dtype,
-    atol,
-    rtol,
-    lse_square_scale,
-    return_z_loss,
+    target_ce, B, T, V, scalar, dtype, atol, rtol, lse_square_scale, return_z_loss
 ):
+    """Test cross entropy with z-loss computation."""
     torch.manual_seed(0)
-    torch_ce = CrossEntropyWithZLoss(
+
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
+
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        device=device,
+    )
+
+    run_z_loss_test(
+        target_ce,
+        input_tensor,
+        target,
         lse_square_scale=lse_square_scale,
         return_z_loss=return_z_loss,
         dtype=dtype,
+        atol=atol,
+        rtol=rtol,
     )
-
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
-
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
-    if return_z_loss:
-        output, z_output = torch_ce(_input, target)
-        output2, z_output2 = target_ce(_input2, target)
-
-    else:
-        output = torch_ce(_input, target)
-        output2 = target_ce(_input2, target)
-
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
-
-    if return_z_loss:
-        assert torch.allclose(z_output, z_output2, atol=atol, rtol=rtol)
-
-    output.backward()
-    output2.backward()
-
-    assert torch.allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
 
 
 def _test_correctness_with_z_loss_with_other_params_once(
@@ -263,71 +308,90 @@ def _test_correctness_with_z_loss_with_other_params_once(
     ignore_index,
     reduction,
 ):
+    """Test cross entropy with z-loss and additional parameters."""
     torch.manual_seed(0)
-    torch_ce = CrossEntropyWithZLoss(
+
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
+
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        ignore_index=ignore_index,
+        device=device,
+    )
+
+    run_z_loss_test(
+        target_ce,
+        input_tensor,
+        target,
         lse_square_scale=lse_square_scale,
         return_z_loss=return_z_loss,
         label_smoothing=label_smoothing,
         ignore_index=ignore_index,
         reduction=reduction,
         dtype=dtype,
+        atol=atol,
+        rtol=rtol,
     )
-
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
-
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
-
-    # Assign some random number of elements as ignore_index
-    num_elements_to_assign = torch.randint(
-        1, B * T // 2, (1,)
-    ).item()  # Random number of elements to set to ignore_index
-    indices_to_assign = torch.randperm(B * T)[
-        :num_elements_to_assign
-    ]  # Randomly select indices
-    target[indices_to_assign] = ignore_index
-
-    if return_z_loss:
-        output, z_output = torch_ce(_input, target)
-        output2, z_output2 = target_ce(_input2, target)
-
-    else:
-        output = torch_ce(_input, target)
-        output2 = target_ce(_input2, target)
-
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
-
-    if return_z_loss:
-        assert torch.allclose(z_output, z_output2, atol=atol, rtol=rtol)
-
-    output.backward()
-    output2.backward()
-    assert_verbose_allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
 
 
 def _test_correctness_not_last_layer_once(
     target_ce, B, T, V, reduction, scalar, dtype, atol, rtol
 ):
+    """Test cross entropy when not in the last layer."""
+    torch.manual_seed(0)
+    from torch.nn import CrossEntropyLoss
 
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
+
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        device=device,
+    )
+
+    # Use standard CrossEntropyLoss for comparison
     torch_ce = CrossEntropyLoss(reduction=reduction)
 
-    _tensor = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
-    _input = _tensor.detach().clone().requires_grad_(True)
-    _input2 = _tensor.detach().clone().requires_grad_(True)
+    # Clone inputs for gradient computation
+    input1 = input_tensor.detach().clone().requires_grad_(True)
+    input2 = input_tensor.detach().clone().requires_grad_(True)
 
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
+    # Compute losses
+    output1 = torch_ce(input1, target)
+    output2 = target_ce(input2, target)
 
-    output = torch_ce(_input, target)
-    output2 = target_ce(_input2, target)
-    assert torch.allclose(output, output2, atol=atol, rtol=rtol)
+    # Compare outputs
+    assert torch.allclose(output1, output2, atol=atol, rtol=rtol)
 
-    loss1 = output * 3
+    # Apply additional operation (scaling by 3)
+    loss1 = output1 * 3
     loss2 = output2 * 3
 
-    loss1.backward(gradient=torch.ones_like(output))
-    loss2.backward(gradient=torch.ones_like(output))
-    assert torch.allclose(_input.grad, _input2.grad, atol=atol, rtol=rtol)
+    # Backpropagate with ones
+    loss1.backward(gradient=torch.ones_like(output1))
+    loss2.backward(gradient=torch.ones_like(output2))
+    assert torch.allclose(input1.grad, input2.grad, atol=atol, rtol=rtol)
 
 
 def _test_correctness_functional(
@@ -339,37 +403,41 @@ def _test_correctness_functional(
     atol,
     rtol,
 ):
+    """Test functional interface implementations."""
+    torch.manual_seed(0)
 
-    _input = torch.randn(B * T, V, device=device, dtype=dtype) * scalar
+    input_tensor = (
+        generate_random_tensor(
+            batch_size=B,
+            seq_length=T,
+            hidden_size=V,
+            dtype=dtype,
+            device=device,
+        )
+        * scalar
+    )
 
-    x1 = _input.clone().requires_grad_(True)
-    x2 = _input.clone().requires_grad_(True)
+    target = generate_random_labels(
+        batch_size=B,
+        seq_length=T,
+        vocab_size=V,
+        device=device,
+    )
 
-    target = torch.randint(0, V, (B * T,), device=device, dtype=torch.long)
-
-    y1, y1_z = liger_cross_entropy(
-        x1,
+    # Test with z-loss and all features enabled
+    run_z_loss_test(
+        LigerCrossEntropyFunction.apply,
+        input_tensor,
         target,
-        ignore_index=0,
         lse_square_scale=1e-4,
-        label_smoothing=0.1,
-        reduction="mean",
-        softcap=30.0,
         return_z_loss=True,
+        label_smoothing=0.1,
+        ignore_index=0,
+        reduction="mean",
+        dtype=dtype,
+        atol=atol,
+        rtol=rtol,
     )
-    y2, y2_z = LigerCrossEntropyFunction.apply(
-        x2, target, 0, 1e-4, 0.1, "mean", 30.0, True
-    )
-
-    assert torch.allclose(y1, y2, atol=atol, rtol=rtol)
-    assert torch.allclose(y1_z, y2_z, atol=atol, rtol=rtol)
-
-    grad = torch.randn_like(y2)
-
-    y1.backward(grad)
-    y2.backward(grad)
-
-    assert torch.allclose(x1.grad, x2.grad, atol=atol, rtol=rtol)
 
 
 #############################################################################

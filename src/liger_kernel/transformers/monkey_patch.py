@@ -806,24 +806,113 @@ MODEL_TYPE_TO_APPLY_LIGER_FN = {
 }
 
 
+def apply_liger_kernel(
+    model_type: str = None,
+    model: PreTrainedModel = None,
+    rope: bool = True,
+    cross_entropy: bool = False,
+    fused_linear_cross_entropy: bool = True,
+    rms_norm: bool = True,
+    layer_norm: bool = True,
+    swiglu: bool = True,
+) -> None:
+    """
+    Generic function to apply Liger kernels to any supported model type.
+    This function can be used either before model initialization (by providing model_type)
+    or after model initialization (by providing model).
+
+    Args:
+        model_type (str, optional): The model type as defined in transformers/models/auto/modeling_auto.py.
+            Required if model is not provided.
+        model (PreTrainedModel, optional): The model instance to apply Liger kernels to.
+            If provided, model_type will be inferred from the model's config.
+        rope (bool): Whether to apply Liger's rotary position embedding. Default is True.
+        cross_entropy (bool): Whether to apply Liger's cross entropy loss. Default is False.
+        fused_linear_cross_entropy (bool):
+            Whether to apply Liger's fused linear cross entropy loss. Default is True.
+            `cross_entropy` and `fused_linear_cross_entropy` cannot both be True.
+            If `fused_linear_cross_entropy` is True, the logits will not be materialized but more memory efficient.
+        rms_norm (bool): Whether to apply Liger's RMSNorm. Default is True.
+        layer_norm (bool): Whether to apply Liger's LayerNorm. Default is True.
+        swiglu (bool): Whether to apply Liger's SwiGLU MLP. Default is True.
+
+    Raises:
+        ValueError: If neither model_type nor model is provided, or if the model type is not supported.
+        AssertionError: If both cross_entropy and fused_linear_cross_entropy are True.
+
+    Examples:
+        # Apply before model initialization
+        >>> apply_liger_kernel(model_type="llama")
+        >>> model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b")
+
+        # Apply after model initialization
+        >>> model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b")
+        >>> apply_liger_kernel(model=model)
+
+        # Apply with custom configuration
+        >>> apply_liger_kernel(
+        ...     model_type="llama",
+        ...     rope=True,
+        ...     cross_entropy=False,
+        ...     fused_linear_cross_entropy=True,
+        ...     rms_norm=True,
+        ...     swiglu=True
+        ... )
+    """
+    assert not (
+        cross_entropy and fused_linear_cross_entropy
+    ), "cross_entropy and fused_linear_cross_entropy cannot both be True."
+
+    if model is not None:
+        inferred_type = getattr(model.config, "model_type", None)
+        if inferred_type not in MODEL_TYPE_TO_APPLY_LIGER_FN:
+            raise ValueError(
+                f"Model type '{inferred_type}' inferred from model is not supported. "
+                f"Supported types: {list(MODEL_TYPE_TO_APPLY_LIGER_FN.keys())}"
+            )
+        _apply_liger_kernel_to_instance(
+            model,
+            rope=rope,
+            cross_entropy=cross_entropy,
+            fused_linear_cross_entropy=fused_linear_cross_entropy,
+            rms_norm=rms_norm,
+            layer_norm=layer_norm,
+            swiglu=swiglu,
+        )
+    elif model_type is not None:
+        if model_type not in MODEL_TYPE_TO_APPLY_LIGER_FN:
+            raise ValueError(
+                f"Model type '{model_type}' is not supported. "
+                f"Supported types: {list(MODEL_TYPE_TO_APPLY_LIGER_FN.keys())}"
+            )
+        _apply_liger_kernel(
+            model_type,
+            rope=rope,
+            cross_entropy=cross_entropy,
+            fused_linear_cross_entropy=fused_linear_cross_entropy,
+            rms_norm=rms_norm,
+            layer_norm=layer_norm,
+            swiglu=swiglu,
+        )
+    else:
+        raise ValueError("Either model_type or model must be provided.")
+
+
 def _apply_liger_kernel(model_type: str, **kwargs) -> None:
     """
     Applies Liger kernels based on the specified model type. The custom
     kernels for the specified model type will be applied with the provided
     keyword arguments, otherwise the default configuration will be used.
 
-    ** Note: Calling _apply_liger_kernel() after model initialization
+    Note: Calling _apply_liger_kernel() after model initialization
     will not be able to fully patch models. This must be called before model initialization.
-    If the model has already been instantiated
+    If the model has already been instantiated, use _apply_liger_kernel_to_instance instead.
 
     Args:
-        - model_type: the model types as defined in transformers/models/auto/modeling_auto.py
-          and specified in the model's config.json
-        - kwargs: keyword arguments that are passed to the corresponding apply_liger_kernel_to_* function.
+        model_type: The model types as defined in transformers/models/auto/modeling_auto.py
+            and specified in the model's config.json
+        kwargs: Keyword arguments that are passed to the corresponding apply_liger_kernel_to_* function.
     """
-    if not model_type:
-        logger.info("Model type was not provided. No Liger kernels will be applied.")
-        return
 
     if model_type not in MODEL_TYPE_TO_APPLY_LIGER_FN.keys():
         logger.info(
