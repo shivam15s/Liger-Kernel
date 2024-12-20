@@ -16,6 +16,10 @@ from transformers.utils import (
 from liger_kernel.transformers.fused_linear_cross_entropy import (
     LigerFusedLinearCrossEntropyLoss,
 )
+from liger_kernel.transformers.model.base_forward import (
+    base_lce_forward,
+    create_causal_lm_output,
+)
 
 if TYPE_CHECKING:
     from transformers.cache_utils import Cache
@@ -231,47 +235,19 @@ def lce_forward(
 
     hidden_states = outputs[0]
 
-    if self.config.pretraining_tp > 1:
-        raise Exception("Liger Kernel does not support pretraining_tp!!")
+    loss, logits = base_lce_forward(
+        self,
+        hidden_states,
+        labels,
+        self.lm_head.weight,
+        self.config.vocab_size,
+        self.config,
+        getattr(self.config, "pretraining_tp", 1),
+    )
 
-    logits = None
-    loss = None
-    # if in training mode, don't materialize logits
-    if self.training and (labels is not None):
-        # We do the same thing as ForCausalLMLoss but using Liger FLCE
-
-        shift_hidden_states = hidden_states[..., :-1, :].contiguous()
-        shift_labels = labels[..., 1:].contiguous()
-
-        # flatten tokens
-        shift_hidden_states = shift_hidden_states.view(-1, self.config.hidden_size)
-        shift_labels = shift_labels.view(-1)
-
-        reduction = "sum" if "num_items_in_batch" in loss_kwargs else "mean"
-        lce = LigerFusedLinearCrossEntropyLoss(reduction=reduction)
-
-        loss = lce(self.lm_head.weight, shift_hidden_states, shift_labels)
-        if reduction == "sum":
-            loss /= loss_kwargs["num_items_in_batch"]
-
-    else:  # if in inference mode materialize logits
-        logits = self.lm_head(hidden_states[:, -num_logits_to_keep:, :])
-        if labels is not None:
-            loss = self.loss_function(
-                logits=logits,
-                labels=labels,
-                vocab_size=self.config.vocab_size,
-                **loss_kwargs,
-            )
-
-    if not return_dict:
-        output = (logits,) + outputs[1:]
-        return (loss,) + output if loss is not None else output
-
-    return CausalLMOutputWithPast(
+    return create_causal_lm_output(
         loss=loss,
         logits=logits,
-        past_key_values=outputs.past_key_values,
-        hidden_states=outputs.hidden_states,
-        attentions=outputs.attentions,
+        outputs=outputs,
+        return_dict=return_dict,
     )
